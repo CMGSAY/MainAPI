@@ -1,14 +1,12 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-
-COPY ["LoginAPI.csproj", "./"]
-RUN dotnet restore "./LoginAPI.csproj"
-
+COPY ["MainAPI.csproj", "./"]
+RUN dotnet restore "./MainAPI.csproj"
 COPY . .
+RUN dotnet publish "MainAPI.csproj" -c Release -o /app/publish
 
-RUN dotnet publish "LoginAPI.csproj" -c Release -o /app/publish
-
+# El Runtime (10.0)
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "LoginAPI.dll"]
+ENTRYPOINT ["dotnet", "MainAPI.dll"]
