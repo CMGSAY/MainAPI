@@ -15,6 +15,31 @@ namespace MainAPI.Controllers
         private readonly MainDbContext _context;
         public PortalDocenteController(MainDbContext context) => _context = context;
 
+        [HttpGet("mis-cursos")]
+        public async Task<IActionResult> GetMisCursos()
+        {
+            // Extraemos el ID de usuario desde el token JWT
+            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Token inválido.");
+            int userId = int.Parse(userIdString);
+
+            // Buscamos el perfil del catedrático
+            var catedratico = await _context.PerfilCatedraticos.FirstOrDefaultAsync(p => p.IdPersonaNavigation.LoginUserId == userId);
+            if (catedratico == null) return Unauthorized("Perfil de catedrático no encontrado.");
+
+            var cursos = await _context.CursoHabilitados
+                .Include(c => c.IdCarreraSemestreCursoNavigation)
+                    .ThenInclude(csc => csc.IdCursoNavigation)
+                .Where(c => c.IdCatedratico == catedratico.IdCatedratico)
+                .Select(c => new {
+                    IdCursoHabilitado = c.IdCursoHabilitado,
+                    Curso = c.IdCarreraSemestreCursoNavigation.IdCursoNavigation.NombreCurso,
+                    Estado = c.Estado
+                }).ToListAsync();
+
+            return Ok(cursos);
+        }
+
         [HttpGet("materiales")]
         public async Task<IActionResult> GetMateriales() => Ok(await _context.MaterialClases.ToListAsync());
 

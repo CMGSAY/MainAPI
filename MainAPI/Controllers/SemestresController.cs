@@ -9,17 +9,16 @@ namespace MainAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Administrador")]
     public class SemestresController : ControllerBase
     {
         private readonly MainDbContext _context;
         public SemestresController(MainDbContext context) => _context = context;
 
         [HttpGet]
-        public async Task<IActionResult> Get() => Ok(await _context.Semestres.OrderBy(s => s.NumeroOrden).ToListAsync());
+        public async Task<IActionResult> Get() => Ok(await _context.Semestres.ToListAsync());
 
         [HttpPost]
-        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Post(SemestreDto d)
         {
             var e = new Semestre { NombreSemestre = d.NombreSemestre, NumeroOrden = d.NumeroOrden };
