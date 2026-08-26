@@ -27,10 +27,10 @@ namespace MainAPI.Controllers
             return Ok(e);
         }
 
-        [HttpGet("jornada")]
+        [HttpGet("jornadas")]
         public async Task<IActionResult> GetJornadas() => Ok(await _context.Jornada.ToListAsync());
 
-        [HttpPost("jornada")]
+        [HttpPost("jornadas")]
         public async Task<IActionResult> PostJornada(JornadaDto d)
         {
             var e = new Jornadum { NombreJornada = d.NombreJornada, HoraInicio = d.HoraInicio, HoraFin = d.HoraFin };

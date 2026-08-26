@@ -93,5 +93,20 @@ namespace MainAPI.Controllers
                 .ToListAsync();
             return Ok(res);
         }
+        [HttpGet("{idCarrera}/semestres/{idSemestre}/cursos")]
+        public async Task<IActionResult> GetCursosPorCarreraYSemestre(int idCarrera, int idSemestre)
+        {
+            var cursos = await (from csc in _context.CarreraSemestreCursos
+                                join cs in _context.CarreraSemestres on csc.IdCarreraSemestre equals cs.IdCarreraSemestre
+                                join c in _context.Cursos on csc.IdCurso equals c.IdCurso
+                                where cs.IdCarrera == idCarrera && cs.IdSemestre == idSemestre
+                                select new
+                                {
+                                    IdCarreraSemestreCurso = csc.IdCarreraSemestreCurso,
+                                    NombreCurso = c.NombreCurso
+                                }).ToListAsync();
+
+            return Ok(cursos);
+        }
     }
 }
