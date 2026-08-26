@@ -41,5 +41,23 @@ namespace MainAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(e);
         }
+
+        [HttpGet("cursos-habilitados/curso-pensum/{idCarreraSemestreCurso}")]
+        public async Task<IActionResult> GetCursosHabilitadosPorPensum(int idCarreraSemestreCurso)
+        {
+            // Usamos JOINs seguros en lugar de Includes para evitar errores de propiedades de navegación faltantes
+            var res = await (from ch in _context.CursoHabilitados
+                             join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
+                             join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico
+                             join per in _context.Personas on pc.IdPersona equals per.IdPersona
+                             where ch.IdCarreraSemestreCurso == idCarreraSemestreCurso && ch.Estado == "activo"
+                             select new
+                             {
+                                 IdCursoHabilitado = ch.IdCursoHabilitado,
+                                 DescripcionLarga = $"Sección {sec.NombreSeccion} - Docente: {per.PrimerNombre} {per.PrimerApellido} ({ch.HorarioInicio}-{ch.HorarioFin})"
+                             }).ToListAsync();
+
+            return Ok(res);
+        }
     }
 }

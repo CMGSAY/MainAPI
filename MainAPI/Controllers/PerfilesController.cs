@@ -54,5 +54,46 @@ namespace MainAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(e);
         }
+
+        // Para Catedráticos (En PerfilCatedraticosController o PerfilesController)
+        [HttpGet("municipio/{idMunicipio}")] // O ruta [HttpGet("catedraticos/municipio/{idMunicipio}")]
+        public async Task<IActionResult> GetCatedraticosByMunicipio(int idMunicipio)
+        {
+            var res = await _context.PerfilCatedraticos
+                .Include(p => p.IdPersonaNavigation)
+                .Where(p => p.IdMunicipio == idMunicipio)
+                .Select(p => new {
+                    IdCatedratico = p.IdCatedratico,
+                    DisplayString = p.IdPersonaNavigation.PrimerNombre + " " + p.IdPersonaNavigation.PrimerApellido
+                })
+                .ToListAsync();
+            return Ok(res);
+        }
+        // Para Estudiantes (En PerfilEstudiantesController o PerfilesController)
+        [HttpGet("estudiantes/municipio/{idMunicipio}")]
+        public async Task<IActionResult> GetEstudiantesByMunicipio(int idMunicipio)
+        {
+            var res = await _context.PerfilEstudiantes
+                .Include(p => p.IdPersonaNavigation)
+                .Where(p => p.IdMunicipio == idMunicipio)
+                .Select(p => new {
+                    IdEstudiante = p.IdEstudiante,
+                    DisplayString = (p.Carnet ?? p.IdEstudiante.ToString()) + " - " + p.IdPersonaNavigation.PrimerNombre + " " + p.IdPersonaNavigation.PrimerApellido
+                })
+                .ToListAsync();
+            return Ok(res);
+        }
+        [HttpPut("estudiantes/{idEstudiante}/semestre/{idSemestre}")]
+        public async Task<IActionResult> AsignarSemestre(int idEstudiante, int idSemestre)
+        {
+            var estudiante = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
+            if (estudiante == null) return NotFound("Estudiante no encontrado.");
+
+            estudiante.IdSemestreActual = idSemestre;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Semestre asignado correctamente." });
+        }
+
     }
 }

@@ -8,6 +8,7 @@
         public string? DireccionCalleAvenida { get; set; }
         public string? Zona { get; set; }
         public int? IdMunicipio { get; set; }
+        public int? IdSemestreActual { get; set; }
         public DateOnly? FechaIngreso { get; set; }
     }
 }

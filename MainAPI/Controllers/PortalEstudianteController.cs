@@ -57,5 +57,35 @@ namespace MainAPI.Controllers
 
             return Ok(historial);
         }
+        // 4. CURSOS DISPONIBLES PARA AUTO-MATRICULACIÓN
+        // GET: api/PortalEstudiante/5/cursos-disponibles-matricula
+        [HttpGet("{idEstudiante}/cursos-disponibles-matricula")]
+        public async Task<IActionResult> GetCursosDisponiblesMatricula(int idEstudiante)
+        {
+            var estudiante = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
+            if (estudiante == null || estudiante.IdSemestreActual == null)
+                return BadRequest("El estudiante no tiene un semestre oficializado por el Administrador.");
+
+            // Usamos JOINs seguros para evitar el error de nombres de navegación que no existen
+            var cursosDisponibles = await (from ch in _context.CursoHabilitados
+                                           join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
+                                           join cs in _context.CarreraSemestres on csc.IdCarreraSemestre equals cs.IdCarreraSemestre
+                                           join cur in _context.Cursos on csc.IdCurso equals cur.IdCurso
+                                           join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
+                                           join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico
+                                           join per in _context.Personas on pc.IdPersona equals per.IdPersona
+                                           where cs.IdSemestre == estudiante.IdSemestreActual && ch.Estado == "activo"
+                                           select new
+                                           {
+                                               IdCursoHabilitado = ch.IdCursoHabilitado,
+                                               NombreCurso = cur.NombreCurso,
+                                               Seccion = sec.NombreSeccion,
+                                               Catedratico = $"{per.PrimerNombre} {per.PrimerApellido}",
+                                               Horario = $"{ch.HorarioInicio}-{ch.HorarioFin}"
+                                           }).ToListAsync();
+
+            return Ok(cursosDisponibles);
+        }
+
     }
 }

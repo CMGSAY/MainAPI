@@ -59,4 +59,5 @@ public partial class PerfilEstudiante
     [ForeignKey("IdPersona")]
     [InverseProperty("PerfilEstudiante")]
     public virtual Persona IdPersonaNavigation { get; set; } = null!;
+    public int? IdSemestreActual { get; set; }
 }
