@@ -4,6 +4,7 @@ using MainAPI.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace MainAPI.Controllers
 {
@@ -25,6 +26,35 @@ namespace MainAPI.Controllers
             _context.Personas.Add(e);
             await _context.SaveChangesAsync();
             return Ok(e);
+        }
+
+        // NUEVO: Para la gestión de usuarios
+        [HttpGet("gestion-usuarios")]
+        public async Task<IActionResult> GetGestionUsuarios()
+        {
+            var personas = await _context.Personas
+                .Select(p => new
+                {
+                    IdPersona = p.IdPersona,
+                    LoginUserId = p.LoginUserId, // Útil para desactivar en LoginAPI luego
+                    NombreCompleto = p.PrimerNombre + " " + p.PrimerApellido,
+                    // Subconsultas para saber qué perfiles tiene
+                    EsAdmin = _context.PerfilAdministradors.Any(a => a.IdPersona == p.IdPersona),
+                    EsDocente = _context.PerfilCatedraticos.Any(c => c.IdPersona == p.IdPersona),
+                    EsEstudiante = _context.PerfilEstudiantes.Any(e => e.IdPersona == p.IdPersona)
+                })
+                .ToListAsync();
+
+            // Evaluamos el rol principal (Prioridad: Admin > Docente > Estudiante)
+            var resultado = personas.Select(p => new
+            {
+                p.IdPersona,
+                p.LoginUserId,
+                p.NombreCompleto,
+                RolPrincipal = p.EsAdmin ? "Administrador" : (p.EsDocente ? "Docente" : (p.EsEstudiante ? "Estudiante" : "Sin Rol"))
+            }).ToList();
+
+            return Ok(resultado);
         }
     }
 }

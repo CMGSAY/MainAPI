@@ -69,7 +69,19 @@ namespace MainAPI.Controllers
             return Ok(res);
         }
 
-        
+        [HttpGet("validar-dpi/{dpi}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ValidarDpiDuplicado(string dpi)
+        {
+            if (string.IsNullOrWhiteSpace(dpi)) return BadRequest();
+
+            bool existeComoCatedratico = await _context.PerfilCatedraticos.AnyAsync(p => p.Dpi == dpi);
+            bool existeComoAdmin = await _context.PerfilAdministradors.AnyAsync(p => p.Dpi == dpi);
+
+            return Ok(existeComoCatedratico || existeComoAdmin);
+        }
+
+
         [HttpGet("estudiantes/municipio/{idMunicipio}")]
         public async Task<IActionResult> GetEstudiantesByMunicipio(int idMunicipio)
         {
