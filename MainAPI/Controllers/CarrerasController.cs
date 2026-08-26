@@ -51,5 +51,33 @@ namespace MainAPI.Controllers
             await _context.SaveChangesAsync();
             return Ok(e);
         }
+
+        [HttpPost("vincular-curso-pensum")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> VincularCursoAPensum([FromBody] VincularPensumDto d)
+        {
+        
+            var carreraSemestre = await _context.CarreraSemestres
+                .FirstOrDefaultAsync(cs => cs.IdCarrera == d.IdCarrera && cs.IdSemestre == d.IdSemestre);
+
+            if (carreraSemestre == null)
+            {
+                carreraSemestre = new CarreraSemestre { IdCarrera = d.IdCarrera, IdSemestre = d.IdSemestre };
+                _context.CarreraSemestres.Add(carreraSemestre);
+                await _context.SaveChangesAsync(); 
+            }
+
+            if (await _context.CarreraSemestreCursos.AnyAsync(csc => csc.IdCarreraSemestre == carreraSemestre.IdCarreraSemestre && csc.IdCurso == d.IdCurso))
+            {
+                return BadRequest(new { Mensaje = "Este curso ya está asignado a esta carrera en este semestre." });
+            }
+
+            var asignacion = new CarreraSemestreCurso { IdCarreraSemestre = carreraSemestre.IdCarreraSemestre, IdCurso = d.IdCurso };
+            _context.CarreraSemestreCursos.Add(asignacion);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Mensaje = "Curso asignado exitosamente al pensum." });
+        }
+
     }
 }
