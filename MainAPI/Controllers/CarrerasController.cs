@@ -80,20 +80,6 @@ namespace MainAPI.Controllers
         }
 
         [HttpGet("{idCarrera}/semestres/{idSemestre}/cursos")]
-        public async Task<IActionResult> GetCursosPensum(int idCarrera, int idSemestre)
-        {
-            var res = await _context.CarreraSemestreCursos
-                .Include(c => c.IdCursoNavigation)
-                .Include(c => c.IdCarreraSemestreNavigation)
-                .Where(c => c.IdCarreraSemestreNavigation.IdCarrera == idCarrera && c.IdCarreraSemestreNavigation.IdSemestre == idSemestre)
-                .Select(c => new {
-                    IdCarreraSemestreCurso = c.IdCarreraSemestreCurso,
-                    NombreCurso = c.IdCursoNavigation.NombreCurso
-                })
-                .ToListAsync();
-            return Ok(res);
-        }
-        [HttpGet("{idCarrera}/semestres/{idSemestre}/cursos")]
         public async Task<IActionResult> GetCursosPorCarreraYSemestre(int idCarrera, int idSemestre)
         {
             var cursos = await (from csc in _context.CarreraSemestreCursos

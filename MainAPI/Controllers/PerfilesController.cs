@@ -55,21 +55,21 @@ namespace MainAPI.Controllers
             return Ok(e);
         }
 
-        // Para Catedráticos (En PerfilCatedraticosController o PerfilesController)
-        [HttpGet("municipio/{idMunicipio}")] // O ruta [HttpGet("catedraticos/municipio/{idMunicipio}")]
-        public async Task<IActionResult> GetCatedraticosByMunicipio(int idMunicipio)
+        [HttpGet("catedraticos/busqueda")]
+        public async Task<IActionResult> GetAllCatedraticosBusqueda()
         {
             var res = await _context.PerfilCatedraticos
                 .Include(p => p.IdPersonaNavigation)
-                .Where(p => p.IdMunicipio == idMunicipio)
                 .Select(p => new {
                     IdCatedratico = p.IdCatedratico,
+                    Dpi = p.Dpi,
                     DisplayString = p.IdPersonaNavigation.PrimerNombre + " " + p.IdPersonaNavigation.PrimerApellido
                 })
                 .ToListAsync();
             return Ok(res);
         }
-        // Para Estudiantes (En PerfilEstudiantesController o PerfilesController)
+
+        
         [HttpGet("estudiantes/municipio/{idMunicipio}")]
         public async Task<IActionResult> GetEstudiantesByMunicipio(int idMunicipio)
         {
