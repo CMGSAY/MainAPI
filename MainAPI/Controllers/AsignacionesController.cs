@@ -22,7 +22,18 @@ namespace MainAPI.Controllers
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostCursoHab(CursoHabilitadoDto d)
         {
-            var e = new CursoHabilitado { IdCarreraSemestreCurso = d.IdCarreraSemestreCurso, IdCiclo = d.IdCiclo, IdJornada = d.IdJornada, IdSeccion = d.IdSeccion, IdAula = d.IdAula, IdCatedratico = d.IdCatedratico, Estado = d.Estado ?? "activo" };
+            var e = new CursoHabilitado
+            {
+                IdCarreraSemestreCurso = d.IdCarreraSemestreCurso,
+                IdCiclo = d.IdCiclo,
+                IdJornada = d.IdJornada,
+                IdSeccion = d.IdSeccion,
+                IdAula = d.IdAula,
+                IdCatedratico = d.IdCatedratico,
+                HorarioInicio = d.HorarioInicio?.ToTimeSpan(),
+                HorarioFin = d.HorarioFin?.ToTimeSpan(),
+                Estado = d.Estado ?? "activo"
+            };
             _context.CursoHabilitados.Add(e);
             await _context.SaveChangesAsync();
             return Ok(e);
