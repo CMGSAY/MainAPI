@@ -8,8 +8,8 @@
         public int IdSeccion { get; set; }
         public int IdAula { get; set; }
         public int IdCatedratico { get; set; }
-        public TimeOnly? HorarioInicio { get; set; }
-        public TimeOnly? HorarioFin { get; set; }
+        //public TimeOnly? HorarioInicio { get; set; }
+        //public TimeOnly? HorarioFin { get; set; }
         public string? Estado { get; set; }
     }
 }
