@@ -51,6 +51,26 @@ namespace MainAPI.Controllers
             return Ok(e);
         }
 
+        [HttpPost("matricula-multiple")]
+        [Authorize(Roles = "Administrador,Estudiante")]
+        public async Task<IActionResult> PostMatriculaMultiple(MatriculaMultipleDto d)
+        {
+            var conf = await _context.ConfiguracionSistemas.FirstOrDefaultAsync(c => c.Clave == "inscripciones_abiertas");
+            if (conf == null || conf.Valor != "true")
+            {
+                return BadRequest("El proceso de inscripción/asignación está cerrado actualmente.");
+            }
+
+            foreach (var idCurso in d.IdsCursosHabilitados)
+            {
+                var e = new AsignacionCurso { IdEstudiante = d.IdEstudiante, IdCursoHabilitado = idCurso, FechaAsignacion = DateOnly.FromDateTime(DateTime.Now), Estado = "asignado", NotaFinal = 0 };
+                _context.AsignacionCursos.Add(e);
+            }
+            await _context.SaveChangesAsync();
+            return Ok(new { mensaje = "Cursos matriculados exitosamente" });
+        }
+
+
         [HttpGet("cursos-habilitados/curso-pensum/{idCarreraSemestreCurso}")]
         public async Task<IActionResult> GetCursosHabilitadosPorPensum(int idCarreraSemestreCurso)
         {

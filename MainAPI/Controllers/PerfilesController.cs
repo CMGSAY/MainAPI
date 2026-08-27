@@ -107,5 +107,17 @@ namespace MainAPI.Controllers
             return Ok(new { message = "Semestre asignado correctamente." });
         }
 
+        [HttpPut("estudiantes/{idEstudiante}/semestre-actual")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> PutSemestreActual(int idEstudiante, [FromBody] int idSemestre)
+        {
+            var est = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
+            if (est == null) return NotFound("Estudiante no encontrado");
+
+            est.IdSemestreActual = idSemestre;
+            await _context.SaveChangesAsync();
+            return Ok(new { mensaje = "Semestre oficializado correctamente" });
+        }
+
     }
 }
