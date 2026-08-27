@@ -73,6 +73,9 @@ public partial class CursoHabilitado
 
     [InverseProperty("IdCursoHabilitadoNavigation")]
     public virtual ICollection<Tarea> Tareas { get; set; } = new List<Tarea>();
+
+    [Column("horario_inicio")]
     public TimeSpan? HorarioInicio { get; set; }
+    [Column("horario_fin")]
     public TimeSpan? HorarioFin { get; set; }
 }
