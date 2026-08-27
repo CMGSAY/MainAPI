@@ -57,6 +57,7 @@ namespace MainAPI.Controllers
 
             return Ok(historial);
         }
+
         // 4. CURSOS DISPONIBLES PARA AUTO-MATRICULACIÓN
         // GET: api/PortalEstudiante/5/cursos-disponibles-matricula
         [HttpGet("{idEstudiante}/cursos-disponibles-matricula")]
@@ -81,7 +82,7 @@ namespace MainAPI.Controllers
                                                NombreCurso = cur.NombreCurso,
                                                Seccion = sec.NombreSeccion,
                                                Catedratico = $"{per.PrimerNombre} {per.PrimerApellido}",
-                                               Horario = $"{ch.HorarioInicio}-{ch.HorarioFin}"
+                                               Horario = "Pendiente de asignar" 
                                            }).ToListAsync();
 
             return Ok(cursosDisponibles);

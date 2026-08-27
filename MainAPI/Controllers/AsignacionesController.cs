@@ -63,7 +63,8 @@ namespace MainAPI.Controllers
                              select new
                              {
                                  IdCursoHabilitado = ch.IdCursoHabilitado,
-                                 DescripcionLarga = $"Sección {sec.NombreSeccion} - Docente: {per.PrimerNombre} {per.PrimerApellido} ({ch.HorarioInicio}-{ch.HorarioFin})"
+                                 // AQUÍ ESTÁ LA MAGIA: Ya no le pedimos el Horario
+                                 DescripcionLarga = $"Sección {sec.NombreSeccion} - Docente: {per.PrimerNombre} {per.PrimerApellido}"
                              }).ToListAsync();
 
             return Ok(res);
