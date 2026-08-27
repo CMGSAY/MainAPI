@@ -63,5 +63,4 @@ public partial class PerfilEstudiante
     [Column("id_semestre_actual")]
     public int? IdSemestreActual { get; set; }
 }
-}
 
