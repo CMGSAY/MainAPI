@@ -17,6 +17,20 @@ namespace MainAPI.Controllers
 
         [HttpGet("estudiantes")]
         public async Task<IActionResult> GetEstudiantes() => Ok(await _context.PerfilEstudiantes.ToListAsync());
+        
+        [HttpGet("estudiantes/busqueda")]
+        public async Task<IActionResult> GetAllEstudiantesBusqueda()
+        {
+            var res = await _context.PerfilEstudiantes
+                .Include(p => p.IdPersonaNavigation)
+                .Select(p => new {
+                    IdEstudiante = p.IdEstudiante,
+                    Carnet = p.Carnet,
+                    DisplayString = p.IdPersonaNavigation.PrimerNombre + " " + p.IdPersonaNavigation.PrimerApellido
+                })
+                .ToListAsync();
+            return Ok(res);
+        }
 
         [HttpPost("estudiantes")]
         [Authorize(Roles = "Administrador")]
