@@ -30,8 +30,6 @@ namespace MainAPI.Controllers
                 IdSeccion = d.IdSeccion,
                 IdAula = d.IdAula,
                 IdCatedratico = d.IdCatedratico,
-                HorarioInicio = d.HorarioInicio?.ToTimeSpan(),
-                HorarioFin = d.HorarioFin?.ToTimeSpan(),
                 Estado = d.Estado ?? "activo"
             };
             _context.CursoHabilitados.Add(e);
