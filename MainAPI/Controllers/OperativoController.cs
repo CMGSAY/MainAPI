@@ -45,7 +45,13 @@ namespace MainAPI.Controllers
         [HttpPost("secciones")]
         public async Task<IActionResult> PostSeccion(SeccionDto d)
         {
-            var e = new Seccion { NombreSeccion = d.NombreSeccion, CupoMaximo = d.CupoMaximo };
+            var e = new Seccion
+            {
+                NombreSeccion = d.NombreSeccion,
+                CupoMaximo = d.CupoMaximo,
+                IdCarrera = d.IdCarrera,
+                IdSemestre = d.IdSemestre
+            };
             _context.Seccions.Add(e);
             await _context.SaveChangesAsync();
             return Ok(e);

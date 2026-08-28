@@ -30,10 +30,8 @@ public partial class Seccion
     public virtual ICollection<CursoHabilitado> CursoHabilitados { get; set; } = new List<CursoHabilitado>();
 
     [ForeignKey("IdCarrera")]
-    [InverseProperty("Seccions")]
     public virtual Carrera? IdCarreraNavigation { get; set; }
 
     [ForeignKey("IdSemestre")]
-    [InverseProperty("Seccions")]
     public virtual Semestre? IdSemestreNavigation { get; set; }
 }

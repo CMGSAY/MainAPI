@@ -96,6 +96,8 @@ public partial class MainDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<HorarioCurso> HorarioCursos { get; set; }
+
     public virtual DbSet<Verification> Verifications { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

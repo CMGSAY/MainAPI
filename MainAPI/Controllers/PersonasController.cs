@@ -28,7 +28,6 @@ namespace MainAPI.Controllers
             return Ok(e);
         }
 
-        // NUEVO: Para la gestión de usuarios
         [HttpGet("gestion-usuarios")]
         public async Task<IActionResult> GetGestionUsuarios()
         {
@@ -36,16 +35,15 @@ namespace MainAPI.Controllers
                 .Select(p => new
                 {
                     IdPersona = p.IdPersona,
-                    LoginUserId = p.LoginUserId, // Útil para desactivar en LoginAPI luego
+                    LoginUserId = p.LoginUserId,
                     NombreCompleto = p.PrimerNombre + " " + p.PrimerApellido,
-                    // Subconsultas para saber qué perfiles tiene
+                
                     EsAdmin = _context.PerfilAdministradors.Any(a => a.IdPersona == p.IdPersona),
                     EsDocente = _context.PerfilCatedraticos.Any(c => c.IdPersona == p.IdPersona),
                     EsEstudiante = _context.PerfilEstudiantes.Any(e => e.IdPersona == p.IdPersona)
                 })
                 .ToListAsync();
 
-            // Evaluamos el rol principal (Prioridad: Admin > Docente > Estudiante)
             var resultado = personas.Select(p => new
             {
                 p.IdPersona,

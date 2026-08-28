@@ -22,6 +22,28 @@ namespace MainAPI.Controllers
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostCursoHab(CursoHabilitadoDto d)
         {
+            // 1. Validar Choques de Horario para la misma Sección y Ciclo
+            if (d.Horarios != null && d.Horarios.Any())
+            {
+                foreach (var h in d.Horarios)
+                {
+                    var existeChoque = await _context.HorarioCursos
+                        .Include(hc => hc.IdCursoHabilitadoNavigation)
+                        .AnyAsync(hc => hc.IdCursoHabilitadoNavigation.IdSeccion == d.IdSeccion &&
+                                        hc.IdCursoHabilitadoNavigation.IdCiclo == d.IdCiclo &&
+                                        hc.DiaSemana == h.DiaSemana &&
+                                        ((h.HoraInicio >= hc.HoraInicio && h.HoraInicio < hc.HoraFin) ||
+                                         (h.HoraFin > hc.HoraInicio && h.HoraFin <= hc.HoraFin) ||
+                                         (h.HoraInicio <= hc.HoraInicio && h.HoraFin >= hc.HoraFin)));
+
+                    if (existeChoque)
+                    {
+                        return BadRequest($"Choque de horario detectado: La sección ya tiene clases el {h.DiaSemana} en ese horario.");
+                    }
+                }
+            }
+
+            // 2. Guardar el Curso Habilitado
             var e = new CursoHabilitado
             {
                 IdCarreraSemestreCurso = d.IdCarreraSemestreCurso,
@@ -30,10 +52,29 @@ namespace MainAPI.Controllers
                 IdSeccion = d.IdSeccion,
                 IdAula = d.IdAula,
                 IdCatedratico = d.IdCatedratico,
-                Estado = d.Estado ?? "activo"
+                Estado = d.Estado ?? "activo",
+                HorarioInicio = d.Horarios?.FirstOrDefault()?.HoraInicio,
+                HorarioFin = d.Horarios?.FirstOrDefault()?.HoraFin
             };
             _context.CursoHabilitados.Add(e);
             await _context.SaveChangesAsync();
+
+            // 3. Guardar los Horarios
+            if (d.Horarios != null && d.Horarios.Any())
+            {
+                foreach (var h in d.Horarios)
+                {
+                    _context.HorarioCursos.Add(new HorarioCurso
+                    {
+                        IdCursoHabilitado = e.IdCursoHabilitado,
+                        DiaSemana = h.DiaSemana,
+                        HoraInicio = h.HoraInicio,
+                        HoraFin = h.HoraFin
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
+
             return Ok(e);
         }
 
@@ -63,13 +104,19 @@ namespace MainAPI.Controllers
 
             foreach (var idCurso in d.IdsCursosHabilitados)
             {
+                // Validación de Cupos (Límite 40)
+                int inscritos = await _context.AsignacionCursos.CountAsync(a => a.IdCursoHabilitado == idCurso);
+                if (inscritos >= 40)
+                {
+                    return BadRequest($"Cupo máximo alcanzado (40) para el curso ID {idCurso}. Por favor asigne otra sección.");
+                }
+
                 var e = new AsignacionCurso { IdEstudiante = d.IdEstudiante, IdCursoHabilitado = idCurso, FechaAsignacion = DateOnly.FromDateTime(DateTime.Now), Estado = "asignado", NotaFinal = 0 };
                 _context.AsignacionCursos.Add(e);
             }
             await _context.SaveChangesAsync();
             return Ok(new { mensaje = "Cursos matriculados exitosamente" });
         }
-
 
         [HttpGet("cursos-habilitados/curso-pensum/{idCarreraSemestreCurso}")]
         public async Task<IActionResult> GetCursosHabilitadosPorPensum(int idCarreraSemestreCurso)
@@ -83,8 +130,7 @@ namespace MainAPI.Controllers
                              select new
                              {
                                  IdCursoHabilitado = ch.IdCursoHabilitado,
-                                 // AQUÍ ESTÁ LA MAGIA: Ya no le pedimos el Horario
-                                 DescripcionLarga = $"Sección {sec.NombreSeccion} - Docente: {per.PrimerNombre} {per.PrimerApellido}"
+                                 DescripcionLarga = $"Sección {sec.NombreSeccion} - Docente: {per.PrimerNombre} {per.PrimerApellido} ({ch.HorarioInicio}-{ch.HorarioFin})"
                              }).ToListAsync();
 
             return Ok(res);

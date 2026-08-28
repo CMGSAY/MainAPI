@@ -17,7 +17,7 @@ namespace MainAPI.Controllers
 
         [HttpGet("estudiantes")]
         public async Task<IActionResult> GetEstudiantes() => Ok(await _context.PerfilEstudiantes.ToListAsync());
-        
+
         [HttpGet("estudiantes/busqueda")]
         public async Task<IActionResult> GetAllEstudiantesBusqueda()
         {
@@ -69,6 +69,7 @@ namespace MainAPI.Controllers
             return Ok(e);
         }
 
+        // Para Catedráticos
         [HttpGet("catedraticos/busqueda")]
         public async Task<IActionResult> GetAllCatedraticosBusqueda()
         {
@@ -94,8 +95,7 @@ namespace MainAPI.Controllers
 
             return Ok(existeComoCatedratico || existeComoAdmin);
         }
-
-
+        // Para Estudiantes (En PerfilEstudiantesController o PerfilesController)
         [HttpGet("estudiantes/municipio/{idMunicipio}")]
         public async Task<IActionResult> GetEstudiantesByMunicipio(int idMunicipio)
         {
@@ -121,31 +121,25 @@ namespace MainAPI.Controllers
             return Ok(new { message = "Semestre asignado correctamente." });
         }
 
-        [HttpPut("estudiantes/{idEstudiante}/semestre-actual")]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> PutSemestreActual(int idEstudiante, [FromBody] int idSemestre)
+        public class RutaAcademicaDto
         {
-            var est = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
-            if (est == null) return NotFound("Estudiante no encontrado");
-
-            est.IdSemestreActual = idSemestre;
-            await _context.SaveChangesAsync();
-            return Ok(new { mensaje = "Semestre oficializado correctamente" });
+            public int IdCarrera { get; set; }
+            public int IdSemestre { get; set; }
         }
 
-        public class AsignarRutaDto { public int IdCarrera { get; set; } public int IdSemestre { get; set; } }
-
         [HttpPut("estudiantes/{idEstudiante}/ruta-academica")]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> AsignarRutaAcademica(int idEstudiante, [FromBody] AsignarRutaDto dto)
+        public async Task<IActionResult> AsignarRutaAcademica(int idEstudiante, [FromBody] RutaAcademicaDto dto)
         {
             var estudiante = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
             if (estudiante == null) return NotFound("Estudiante no encontrado.");
 
             estudiante.IdCarrera = dto.IdCarrera;
             estudiante.IdSemestreActual = dto.IdSemestre;
+
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Ruta académica oficializada exitosamente." });
+
+            return Ok(new { message = "Ruta académica asignada correctamente." });
         }
+
     }
 }
