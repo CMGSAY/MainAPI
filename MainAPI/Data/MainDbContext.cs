@@ -40,6 +40,8 @@ public partial class MainDbContext : DbContext
 
     public virtual DbSet<ClaseSesion> ClaseSesions { get; set; }
 
+    public virtual DbSet<ConfiguracionSistema> ConfiguracionSistemas { get; set; }
+
     public virtual DbSet<Curso> Cursos { get; set; }
 
     public virtual DbSet<CursoHabilitado> CursoHabilitados { get; set; }
@@ -95,7 +97,6 @@ public partial class MainDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<Verification> Verifications { get; set; }
-    public DbSet<ConfiguracionSistema> ConfiguracionSistemas { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -241,6 +242,11 @@ public partial class MainDbContext : DbContext
             entity.HasOne(d => d.IdCursoHabilitadoNavigation).WithMany(p => p.ClaseSesions)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("clase_sesion_id_curso_habilitado_fkey");
+        });
+
+        modelBuilder.Entity<ConfiguracionSistema>(entity =>
+        {
+            entity.HasKey(e => e.IdConfig).HasName("configuracion_sistema_pkey");
         });
 
         modelBuilder.Entity<Curso>(entity =>
@@ -440,11 +446,15 @@ public partial class MainDbContext : DbContext
         {
             entity.HasKey(e => e.IdEstudiante).HasName("perfil_estudiante_pkey");
 
+            entity.HasOne(d => d.IdCarreraNavigation).WithMany(p => p.PerfilEstudiantes).HasConstraintName("fk_perfil_estudiante_carrera");
+
             entity.HasOne(d => d.IdMunicipioNavigation).WithMany(p => p.PerfilEstudiantes).HasConstraintName("perfil_estudiante_id_municipio_fkey");
 
             entity.HasOne(d => d.IdPersonaNavigation).WithOne(p => p.PerfilEstudiante)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("perfil_estudiante_id_persona_fkey");
+
+            entity.HasOne(d => d.IdSemestreActualNavigation).WithMany(p => p.PerfilEstudiantes).HasConstraintName("fk_perfil_estudiante_semestre");
         });
 
         modelBuilder.Entity<Persona>(entity =>
@@ -464,6 +474,10 @@ public partial class MainDbContext : DbContext
         modelBuilder.Entity<Seccion>(entity =>
         {
             entity.HasKey(e => e.IdSeccion).HasName("seccion_pkey");
+
+            entity.HasOne(d => d.IdCarreraNavigation).WithMany(p => p.Seccions).HasConstraintName("fk_seccion_carrera");
+
+            entity.HasOne(d => d.IdSemestreNavigation).WithMany(p => p.Seccions).HasConstraintName("fk_seccion_semestre");
         });
 
         modelBuilder.Entity<Sede>(entity =>

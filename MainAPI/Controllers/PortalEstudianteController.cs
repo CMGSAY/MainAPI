@@ -9,7 +9,7 @@ namespace MainAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Estudiante")]
+    [Authorize(Roles = "Estudiante,Administrador")]
     public class PortalEstudianteController : ControllerBase
     {
         private readonly MainDbContext _context;
@@ -57,17 +57,28 @@ namespace MainAPI.Controllers
 
             return Ok(historial);
         }
-
         // 4. CURSOS DISPONIBLES PARA AUTO-MATRICULACIÓN
         // GET: api/PortalEstudiante/5/cursos-disponibles-matricula
         [HttpGet("{idEstudiante}/cursos-disponibles-matricula")]
         public async Task<IActionResult> GetCursosDisponiblesMatricula(int idEstudiante)
         {
             var estudiante = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
-            if (estudiante == null || estudiante.IdSemestreActual == null)
-                return BadRequest("El estudiante no tiene un semestre oficializado por el Administrador.");
+            if (estudiante == null || estudiante.IdSemestreActual == null || estudiante.IdCarrera == null)
+                return BadRequest("El estudiante no tiene un semestre o carrera oficializada por el Administrador.");
 
-            // Usamos JOINs seguros para evitar el error de nombres de navegación que no existen
+            var infoAcademica = await (from c in _context.Carreras
+                                       join f in _context.Facultads on c.IdFacultad equals f.IdFacultad
+                                       join s in _context.Sedes on f.IdSede equals s.IdSede
+                                       join m in _context.Municipios on s.IdMunicipio equals m.IdMunicipio
+                                       join d in _context.Departamentos on m.IdDepartamento equals d.IdDepartamento
+                                       where c.IdCarrera == estudiante.IdCarrera
+                                       select new
+                                       {
+                                           Facultad = f.NombreFacultad,
+                                           Sede = s.Nombre,
+                                           Departamento = d.NombreDepartamento
+                                       }).FirstOrDefaultAsync();
+
             var cursosDisponibles = await (from ch in _context.CursoHabilitados
                                            join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
                                            join cs in _context.CarreraSemestres on csc.IdCarreraSemestre equals cs.IdCarreraSemestre
@@ -75,17 +86,25 @@ namespace MainAPI.Controllers
                                            join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
                                            join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico
                                            join per in _context.Personas on pc.IdPersona equals per.IdPersona
-                                           where cs.IdSemestre == estudiante.IdSemestreActual && ch.Estado == "activo"
-                                           select new
-                                           {
+                                           where cs.IdSemestre == estudiante.IdSemestreActual && cs.IdCarrera == estudiante.IdCarrera && ch.Estado == "activo"
+                                          select new
+                                          {
                                                IdCursoHabilitado = ch.IdCursoHabilitado,
                                                NombreCurso = cur.NombreCurso,
                                                Seccion = sec.NombreSeccion,
                                                Catedratico = $"{per.PrimerNombre} {per.PrimerApellido}",
-                                               Horario = "Pendiente de asignar" 
+                                               Horario = $"{ch.HorarioInicio}-{ch.HorarioFin}"
                                            }).ToListAsync();
 
-            return Ok(cursosDisponibles);
+            var respuesta = new
+            {
+                Facultad = infoAcademica?.Facultad ?? "N/A",
+                Departamento = infoAcademica?.Departamento ?? "N/A",
+                Sede = infoAcademica?.Sede ?? "N/A",
+                Cursos = cursosDisponibles
+            };
+
+            return Ok(respuesta);
         }
 
     }

@@ -22,4 +22,10 @@ public partial class Semestre
 
     [InverseProperty("IdSemestreNavigation")]
     public virtual ICollection<CarreraSemestre> CarreraSemestres { get; set; } = new List<CarreraSemestre>();
+
+    [InverseProperty("IdSemestreActualNavigation")]
+    public virtual ICollection<PerfilEstudiante> PerfilEstudiantes { get; set; } = new List<PerfilEstudiante>();
+
+    [InverseProperty("IdSemestreNavigation")]
+    public virtual ICollection<Seccion> Seccions { get; set; } = new List<Seccion>();
 }

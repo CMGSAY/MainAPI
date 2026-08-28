@@ -40,6 +40,12 @@ public partial class PerfilEstudiante
     [Column("fecha_ingreso")]
     public DateOnly? FechaIngreso { get; set; }
 
+    [Column("id_semestre_actual")]
+    public int? IdSemestreActual { get; set; }
+
+    [Column("id_carrera")]
+    public int? IdCarrera { get; set; }
+
     [InverseProperty("IdEstudianteNavigation")]
     public virtual ICollection<AsignacionCurso> AsignacionCursos { get; set; } = new List<AsignacionCurso>();
 
@@ -52,6 +58,10 @@ public partial class PerfilEstudiante
     [InverseProperty("IdEstudianteNavigation")]
     public virtual ICollection<EntregaTarea> EntregaTareas { get; set; } = new List<EntregaTarea>();
 
+    [ForeignKey("IdCarrera")]
+    [InverseProperty("PerfilEstudiantes")]
+    public virtual Carrera? IdCarreraNavigation { get; set; }
+
     [ForeignKey("IdMunicipio")]
     [InverseProperty("PerfilEstudiantes")]
     public virtual Municipio? IdMunicipioNavigation { get; set; }
@@ -60,9 +70,7 @@ public partial class PerfilEstudiante
     [InverseProperty("PerfilEstudiante")]
     public virtual Persona IdPersonaNavigation { get; set; } = null!;
 
-    [Column("id_semestre_actual")]
-    public int? IdSemestreActual { get; set; }
-    [Column("id_carrera")]
-    public int? IdCarrera { get; set; }
+    [ForeignKey("IdSemestreActual")]
+    [InverseProperty("PerfilEstudiantes")]
+    public virtual Semestre? IdSemestreActualNavigation { get; set; }
 }
-

@@ -38,4 +38,10 @@ public partial class Carrera
     [ForeignKey("IdFacultad")]
     [InverseProperty("Carreras")]
     public virtual Facultad IdFacultadNavigation { get; set; } = null!;
+
+    [InverseProperty("IdCarreraNavigation")]
+    public virtual ICollection<PerfilEstudiante> PerfilEstudiantes { get; set; } = new List<PerfilEstudiante>();
+
+    [InverseProperty("IdCarreraNavigation")]
+    public virtual ICollection<Seccion> Seccions { get; set; } = new List<Seccion>();
 }

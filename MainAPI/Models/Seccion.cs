@@ -20,6 +20,20 @@ public partial class Seccion
     [Column("cupo_maximo")]
     public int? CupoMaximo { get; set; }
 
+    [Column("id_carrera")]
+    public int? IdCarrera { get; set; }
+
+    [Column("id_semestre")]
+    public int? IdSemestre { get; set; }
+
     [InverseProperty("IdSeccionNavigation")]
     public virtual ICollection<CursoHabilitado> CursoHabilitados { get; set; } = new List<CursoHabilitado>();
+
+    [ForeignKey("IdCarrera")]
+    [InverseProperty("Seccions")]
+    public virtual Carrera? IdCarreraNavigation { get; set; }
+
+    [ForeignKey("IdSemestre")]
+    [InverseProperty("Seccions")]
+    public virtual Semestre? IdSemestreNavigation { get; set; }
 }

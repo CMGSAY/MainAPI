@@ -35,6 +35,12 @@ public partial class CursoHabilitado
     [StringLength(30)]
     public string? Estado { get; set; }
 
+    [Column("horario_inicio")]
+    public TimeOnly? HorarioInicio { get; set; }
+
+    [Column("horario_fin")]
+    public TimeOnly? HorarioFin { get; set; }
+
     [InverseProperty("IdCursoHabilitadoNavigation")]
     public virtual ICollection<AsignacionCurso> AsignacionCursos { get; set; } = new List<AsignacionCurso>();
 
@@ -73,9 +79,4 @@ public partial class CursoHabilitado
 
     [InverseProperty("IdCursoHabilitadoNavigation")]
     public virtual ICollection<Tarea> Tareas { get; set; } = new List<Tarea>();
-
-    // [Column("horario_inicio")]
-    // public TimeSpan? HorarioInicio { get; set; }
-    // [Column("horario_fin")]
-    // public TimeSpan? HorarioFin { get; set; }
 }
