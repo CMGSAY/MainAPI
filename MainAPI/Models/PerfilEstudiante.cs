@@ -62,5 +62,7 @@ public partial class PerfilEstudiante
 
     [Column("id_semestre_actual")]
     public int? IdSemestreActual { get; set; }
+    [Column("id_carrera")]
+    public int? IdCarrera { get; set; }
 }
 

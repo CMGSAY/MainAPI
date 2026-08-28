@@ -133,5 +133,19 @@ namespace MainAPI.Controllers
             return Ok(new { mensaje = "Semestre oficializado correctamente" });
         }
 
+        public class AsignarRutaDto { public int IdCarrera { get; set; } public int IdSemestre { get; set; } }
+
+        [HttpPut("estudiantes/{idEstudiante}/ruta-academica")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> AsignarRutaAcademica(int idEstudiante, [FromBody] AsignarRutaDto dto)
+        {
+            var estudiante = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
+            if (estudiante == null) return NotFound("Estudiante no encontrado.");
+
+            estudiante.IdCarrera = dto.IdCarrera;
+            estudiante.IdSemestreActual = dto.IdSemestre;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Ruta académica oficializada exitosamente." });
+        }
     }
 }
