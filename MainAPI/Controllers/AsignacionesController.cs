@@ -53,15 +53,18 @@ namespace MainAPI.Controllers
                 {
                     foreach (var h in d.Horarios)
                     {
+                        var reqInicio = TimeOnly.Parse(h.HoraInicio);
+                        var reqFin = TimeOnly.Parse(h.HoraFin);
+
                         var choqueSeccion = await _context.HorarioCursos
                             .Include(hc => hc.IdCursoHabilitadoNavigation)
                             .AnyAsync(hc => hc.IdCursoHabilitadoNavigation.IdSeccion == d.IdSeccion &&
                                             hc.IdCursoHabilitadoNavigation.IdCiclo == d.IdCiclo &&
                                             hc.IdCursoHabilitadoNavigation.Estado == "activo" &&
                                             hc.DiaSemana == h.DiaSemana &&
-                                            ((h.HoraInicio >= hc.HoraInicio && h.HoraInicio < hc.HoraFin) ||
-                                             (h.HoraFin > hc.HoraInicio && h.HoraFin <= hc.HoraFin) ||
-                                             (h.HoraInicio <= hc.HoraInicio && h.HoraFin >= hc.HoraFin)));
+                                            ((reqInicio >= hc.HoraInicio && reqInicio < hc.HoraFin) ||
+                                             (reqFin > hc.HoraInicio && reqFin <= hc.HoraFin) ||
+                                             (reqInicio <= hc.HoraInicio && reqFin >= hc.HoraFin)));
 
                         if (choqueSeccion) return BadRequest($"Choque de horario detectado: La sección ya tiene clases el {h.DiaSemana} en ese horario.");
 
@@ -71,15 +74,16 @@ namespace MainAPI.Controllers
                                             hc.IdCursoHabilitadoNavigation.IdCiclo == d.IdCiclo &&
                                             hc.IdCursoHabilitadoNavigation.Estado == "activo" &&
                                             hc.DiaSemana == h.DiaSemana &&
-                                            ((h.HoraInicio >= hc.HoraInicio && h.HoraInicio < hc.HoraFin) ||
-                                             (h.HoraFin > hc.HoraInicio && h.HoraFin <= hc.HoraFin) ||
-                                             (h.HoraInicio <= hc.HoraInicio && h.HoraFin >= hc.HoraFin)));
+                                            ((reqInicio >= hc.HoraInicio && reqInicio < hc.HoraFin) ||
+                                             (reqFin > hc.HoraInicio && reqFin <= hc.HoraFin) ||
+                                             (reqInicio <= hc.HoraInicio && reqFin >= hc.HoraFin)));
 
                         if (choqueAula) return BadRequest($"Choque de horario detectado: El Aula/Salón ya está ocupada el {h.DiaSemana} en ese horario.");
                     }
                 }
 
                 // 2. Guardar el Curso Habilitado
+                var primerHorario = d.Horarios?.FirstOrDefault();
                 var e = new CursoHabilitado
                 {
                     IdCarreraSemestreCurso = d.IdCarreraSemestreCurso,
@@ -88,7 +92,9 @@ namespace MainAPI.Controllers
                     IdSeccion = d.IdSeccion,
                     IdAula = d.IdAula,
                     IdCatedratico = d.IdCatedratico,
-                    Estado = d.Estado ?? "activo"
+                    Estado = d.Estado ?? "activo",
+                    HorarioInicio = primerHorario != null ? TimeOnly.Parse(primerHorario.HoraInicio) : null,
+                    HorarioFin = primerHorario != null ? TimeOnly.Parse(primerHorario.HoraFin) : null
                 };
 
                 _context.CursoHabilitados.Add(e);
@@ -103,8 +109,8 @@ namespace MainAPI.Controllers
                         {
                             IdCursoHabilitado = e.IdCursoHabilitado,
                             DiaSemana = h.DiaSemana,
-                            HoraInicio = h.HoraInicio,
-                            HoraFin = h.HoraFin
+                            HoraInicio = TimeOnly.Parse(h.HoraInicio),
+                            HoraFin = TimeOnly.Parse(h.HoraFin)
                         });
                     }
                     await _context.SaveChangesAsync();
