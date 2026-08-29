@@ -24,13 +24,21 @@ namespace MainAPI.Controllers
             try
             {
                 // Devuelve los horarios ocupados ya sea porque el Aula está ocupada o la Sección ya tiene clases.
-                var horarios = await _context.HorarioCursos
+                var horariosDb = await _context.HorarioCursos
                     .Include(h => h.IdCursoHabilitadoNavigation)
                     .Where(h => h.DiaSemana == dia &&
                                (h.IdCursoHabilitadoNavigation.IdSeccion == idSeccion || h.IdCursoHabilitadoNavigation.IdAula == idAula) &&
                                h.IdCursoHabilitadoNavigation.Estado == "activo")
                     .Select(h => new { h.HoraInicio, h.HoraFin, h.IdCursoHabilitadoNavigation.IdSeccion, h.IdCursoHabilitadoNavigation.IdAula })
                     .ToListAsync();
+
+                var horarios = horariosDb.Select(h => new {
+                    HoraInicio = h.HoraInicio.ToString("HH:mm:ss"),
+                    HoraFin = h.HoraFin.ToString("HH:mm:ss"),
+                    h.IdSeccion,
+                    h.IdAula
+                }).ToList();
+
                 return Ok(horarios);
             }
             catch (Exception ex)
