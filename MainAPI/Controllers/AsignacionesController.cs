@@ -194,5 +194,34 @@ namespace MainAPI.Controllers
 
             return Ok(res);
         }
+
+        [HttpGet("cursos-habilitados/activos")]
+        public async Task<IActionResult> GetCursosActivos()
+        {
+            var res = await (from ch in _context.CursoHabilitados
+                             join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
+                             join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
+                             join c in _context.Cursos on csc.IdCurso equals c.IdCurso
+                             join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico
+                             join per in _context.Personas on pc.IdPersona equals per.IdPersona
+                             where ch.Estado == "activo"
+                             select new
+                             {
+                                 IdCursoHabilitado = ch.IdCursoHabilitado,
+                                 DisplayString = $"{c.NombreCurso} (Sec: {sec.NombreSeccion}) - {per.PrimerNombre} {per.PrimerApellido}"
+                             }).ToListAsync();
+            return Ok(res);
+        }
+
+        [HttpPut("cursos-habilitados/{id}/desactivar")]
+        public async Task<IActionResult> DesactivarCurso(int id)
+        {
+            var curso = await _context.CursoHabilitados.FindAsync(id);
+            if (curso == null) return NotFound("Curso no encontrado.");
+
+            curso.Estado = "inactivo";
+            await _context.SaveChangesAsync();
+            return Ok(new { mensaje = "Curso deshabilitado exitosamente. Los horarios han sido liberados." });
+        }
     }
 }

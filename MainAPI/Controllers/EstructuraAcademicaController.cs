@@ -41,5 +41,14 @@ namespace MainAPI.Controllers
                                    select s).ToListAsync();
             return Ok(semestres);
         }
+
+        [HttpGet("jornadas")]
+        public async Task<IActionResult> GetJornadas() =>
+            Ok(await _context.Jornada.ToListAsync());
+
+        [HttpGet("secciones/carrera/{idCarrera}/semestre/{idSemestre}")]
+        public async Task<IActionResult> GetSecciones(int idCarrera, int idSemestre) =>
+            Ok(await _context.Seccions.Where(s => s.IdCarrera == idCarrera && s.IdSemestre == idSemestre).ToListAsync());
     }
 }
+  
