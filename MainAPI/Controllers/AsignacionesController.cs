@@ -21,15 +21,24 @@ namespace MainAPI.Controllers
         [HttpGet("horarios-ocupados/{idSeccion}/{idAula}/{dia}")]
         public async Task<IActionResult> GetHorariosOcupados(int idSeccion, int idAula, string dia)
         {
-            // Devuelve los horarios ocupados ya sea porque el Aula está ocupada o la Sección ya tiene clases.
-            var horarios = await _context.HorarioCursos
-                .Include(h => h.IdCursoHabilitadoNavigation)
-                .Where(h => h.DiaSemana == dia &&
-                           (h.IdCursoHabilitadoNavigation.IdSeccion == idSeccion || h.IdCursoHabilitadoNavigation.IdAula == idAula) &&
-                           h.IdCursoHabilitadoNavigation.Estado == "activo")
-                .Select(h => new { h.HoraInicio, h.HoraFin, h.IdCursoHabilitadoNavigation.IdSeccion, h.IdCursoHabilitadoNavigation.IdAula })
-                .ToListAsync();
-            return Ok(horarios);
+            try
+            {
+                // Devuelve los horarios ocupados ya sea porque el Aula está ocupada o la Sección ya tiene clases.
+                var horarios = await _context.HorarioCursos
+                    .Include(h => h.IdCursoHabilitadoNavigation)
+                    .Where(h => h.DiaSemana == dia &&
+                               (h.IdCursoHabilitadoNavigation.IdSeccion == idSeccion || h.IdCursoHabilitadoNavigation.IdAula == idAula) &&
+                               h.IdCursoHabilitadoNavigation.Estado == "activo")
+                    .Select(h => new { h.HoraInicio, h.HoraFin, h.IdCursoHabilitadoNavigation.IdSeccion, h.IdCursoHabilitadoNavigation.IdAula })
+                    .ToListAsync();
+                return Ok(horarios);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("===== ERROR EN GET HORARIOS OCUPADOS =====");
+                Console.WriteLine(ex.ToString());
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
         }
 
 
@@ -105,6 +114,9 @@ namespace MainAPI.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine("===== ERROR EN POST CURSO HABILITADO =====");
+                Console.WriteLine(ex.ToString());
+
                 // Capturar el error real de la base de datos para saber qué está fallando (Foreign Key, Null reference, etc)
                 var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return StatusCode(500, $"Error interno: {errorMsg}");
