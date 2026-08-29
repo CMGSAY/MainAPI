@@ -18,6 +18,20 @@ namespace MainAPI.Controllers
         [HttpGet("cursos-habilitados")]
         public async Task<IActionResult> GetCursosHab() => Ok(await _context.CursoHabilitados.ToListAsync());
 
+        [HttpGet("horarios-ocupados/{idSeccion}/{idAula}/{dia}")]
+        public async Task<IActionResult> GetHorariosOcupados(int idSeccion, int idAula, string dia)
+        {
+            // Devuelve los horarios ocupados ya sea porque el Aula está ocupada o la Sección ya tiene clases.
+            var horarios = await _context.HorarioCursos
+                .Include(h => h.IdCursoHabilitadoNavigation)
+                .Where(h => h.DiaSemana == dia &&
+                           (h.IdCursoHabilitadoNavigation.IdSeccion == idSeccion || h.IdCursoHabilitadoNavigation.IdAula == idAula) &&
+                           h.IdCursoHabilitadoNavigation.Estado == "activo")
+                .Select(h => new { h.HoraInicio, h.HoraFin, h.IdCursoHabilitadoNavigation.IdSeccion, h.IdCursoHabilitadoNavigation.IdAula })
+                .ToListAsync();
+            return Ok(horarios);
+        }
+
         [HttpPost("cursos-habilitados")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostCursoHab(CursoHabilitadoDto d)
