@@ -32,64 +32,83 @@ namespace MainAPI.Controllers
             return Ok(horarios);
         }
 
+
         [HttpPost("cursos-habilitados")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostCursoHab(CursoHabilitadoDto d)
         {
-            // 1. Validar Choques de Horario para la misma Sección y Ciclo
-            if (d.Horarios != null && d.Horarios.Any())
+            try
             {
-                foreach (var h in d.Horarios)
+                // 1. Validar Choques de Horario para la misma Sección, Aula y Ciclo
+                if (d.Horarios != null && d.Horarios.Any())
                 {
-                    var existeChoque = await _context.HorarioCursos
-                        .Include(hc => hc.IdCursoHabilitadoNavigation)
-                        .AnyAsync(hc => hc.IdCursoHabilitadoNavigation.IdSeccion == d.IdSeccion &&
-                                        hc.IdCursoHabilitadoNavigation.IdCiclo == d.IdCiclo &&
-                                        hc.DiaSemana == h.DiaSemana &&
-                                        ((h.HoraInicio >= hc.HoraInicio && h.HoraInicio < hc.HoraFin) ||
-                                         (h.HoraFin > hc.HoraInicio && h.HoraFin <= hc.HoraFin) ||
-                                         (h.HoraInicio <= hc.HoraInicio && h.HoraFin >= hc.HoraFin)));
-
-                    if (existeChoque)
+                    foreach (var h in d.Horarios)
                     {
-                        return BadRequest($"Choque de horario detectado: La sección ya tiene clases el {h.DiaSemana} en ese horario.");
+                        var choqueSeccion = await _context.HorarioCursos
+                            .Include(hc => hc.IdCursoHabilitadoNavigation)
+                            .AnyAsync(hc => hc.IdCursoHabilitadoNavigation.IdSeccion == d.IdSeccion &&
+                                            hc.IdCursoHabilitadoNavigation.IdCiclo == d.IdCiclo &&
+                                            hc.IdCursoHabilitadoNavigation.Estado == "activo" &&
+                                            hc.DiaSemana == h.DiaSemana &&
+                                            ((h.HoraInicio >= hc.HoraInicio && h.HoraInicio < hc.HoraFin) ||
+                                             (h.HoraFin > hc.HoraInicio && h.HoraFin <= hc.HoraFin) ||
+                                             (h.HoraInicio <= hc.HoraInicio && h.HoraFin >= hc.HoraFin)));
+
+                        if (choqueSeccion) return BadRequest($"Choque de horario detectado: La sección ya tiene clases el {h.DiaSemana} en ese horario.");
+
+                        var choqueAula = await _context.HorarioCursos
+                            .Include(hc => hc.IdCursoHabilitadoNavigation)
+                            .AnyAsync(hc => hc.IdCursoHabilitadoNavigation.IdAula == d.IdAula &&
+                                            hc.IdCursoHabilitadoNavigation.IdCiclo == d.IdCiclo &&
+                                            hc.IdCursoHabilitadoNavigation.Estado == "activo" &&
+                                            hc.DiaSemana == h.DiaSemana &&
+                                            ((h.HoraInicio >= hc.HoraInicio && h.HoraInicio < hc.HoraFin) ||
+                                             (h.HoraFin > hc.HoraInicio && h.HoraFin <= hc.HoraFin) ||
+                                             (h.HoraInicio <= hc.HoraInicio && h.HoraFin >= hc.HoraFin)));
+
+                        if (choqueAula) return BadRequest($"Choque de horario detectado: El Aula/Salón ya está ocupada el {h.DiaSemana} en ese horario.");
                     }
                 }
-            }
 
-            // 2. Guardar el Curso Habilitado
-            var e = new CursoHabilitado
-            {
-                IdCarreraSemestreCurso = d.IdCarreraSemestreCurso,
-                IdCiclo = d.IdCiclo,
-                IdJornada = d.IdJornada,
-                IdSeccion = d.IdSeccion,
-                IdAula = d.IdAula,
-                IdCatedratico = d.IdCatedratico,
-                Estado = d.Estado ?? "activo",
-                HorarioInicio = d.Horarios?.FirstOrDefault()?.HoraInicio,
-                HorarioFin = d.Horarios?.FirstOrDefault()?.HoraFin
-            };
-            _context.CursoHabilitados.Add(e);
-            await _context.SaveChangesAsync();
-
-            // 3. Guardar los Horarios
-            if (d.Horarios != null && d.Horarios.Any())
-            {
-                foreach (var h in d.Horarios)
+                // 2. Guardar el Curso Habilitado
+                var e = new CursoHabilitado
                 {
-                    _context.HorarioCursos.Add(new HorarioCurso
-                    {
-                        IdCursoHabilitado = e.IdCursoHabilitado,
-                        DiaSemana = h.DiaSemana,
-                        HoraInicio = h.HoraInicio,
-                        HoraFin = h.HoraFin
-                    });
-                }
-                await _context.SaveChangesAsync();
-            }
+                    IdCarreraSemestreCurso = d.IdCarreraSemestreCurso,
+                    IdCiclo = d.IdCiclo,
+                    IdJornada = d.IdJornada,
+                    IdSeccion = d.IdSeccion,
+                    IdAula = d.IdAula,
+                    IdCatedratico = d.IdCatedratico,
+                    Estado = d.Estado ?? "activo"
+                };
 
-            return Ok(e);
+                _context.CursoHabilitados.Add(e);
+                await _context.SaveChangesAsync();
+
+                // 3. Guardar los Horarios
+                if (d.Horarios != null && d.Horarios.Any())
+                {
+                    foreach (var h in d.Horarios)
+                    {
+                        _context.HorarioCursos.Add(new HorarioCurso
+                        {
+                            IdCursoHabilitado = e.IdCursoHabilitado,
+                            DiaSemana = h.DiaSemana,
+                            HoraInicio = h.HoraInicio,
+                            HoraFin = h.HoraFin
+                        });
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
+                return Ok(e);
+            }
+            catch (Exception ex)
+            {
+                // Capturar el error real de la base de datos para saber qué está fallando (Foreign Key, Null reference, etc)
+                var errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return StatusCode(500, $"Error interno: {errorMsg}");
+            }
         }
 
         [HttpGet("estudiantes")]
