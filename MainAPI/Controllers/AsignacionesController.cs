@@ -116,7 +116,7 @@ namespace MainAPI.Controllers
                     await _context.SaveChangesAsync();
                 }
 
-                return Ok(e);
+                return Ok(new { mensaje = "Curso habilitado exitosamente" });
             }
             catch (Exception ex)
             {
