@@ -198,18 +198,38 @@ namespace MainAPI.Controllers
         [HttpGet("cursos-habilitados/activos")]
         public async Task<IActionResult> GetCursosActivos()
         {
-            var res = await (from ch in _context.CursoHabilitados
-                             join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
-                             join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
-                             join c in _context.Cursos on csc.IdCurso equals c.IdCurso
-                             join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico
-                             join per in _context.Personas on pc.IdPersona equals per.IdPersona
-                             where ch.Estado == "activo"
-                             select new
-                             {
-                                 IdCursoHabilitado = ch.IdCursoHabilitado,
-                                 DisplayString = $"{c.NombreCurso} (Sec: {sec.NombreSeccion}) - {per.PrimerNombre} {per.PrimerApellido}"
-                             }).ToListAsync();
+            var query = await (from ch in _context.CursoHabilitados
+                               join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
+                               join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
+                               join cs in _context.CarreraSemestres on csc.IdCarreraSemestre equals cs.IdCarreraSemestre
+                               join sem in _context.Semestres on cs.IdSemestre equals sem.IdSemestre
+                               join car in _context.Carreras on cs.IdCarrera equals car.IdCarrera
+                               join fac in _context.Facultads on car.IdFacultad equals fac.IdFacultad
+                               join c in _context.Cursos on csc.IdCurso equals c.IdCurso
+                               join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico
+                               join per in _context.Personas on pc.IdPersona equals per.IdPersona
+                               where ch.Estado == "activo"
+                               select new
+                               {
+                                   ch.IdCursoHabilitado,
+                                   c.NombreCurso,
+                                   sec.NombreSeccion,
+                                   Docente = per.PrimerNombre + " " + per.PrimerApellido,
+                                   fac.NombreFacultad,
+                                   sem.NombreSemestre,
+                                   car.NombreCarrera,
+                                   ch.HorarioInicio,
+                                   ch.HorarioFin,
+                                   Dias = _context.HorarioCursos.Where(h => h.IdCursoHabilitado == ch.IdCursoHabilitado).Select(h => h.DiaSemana).ToList()
+                               }).ToListAsync();
+
+            var res = query.Select(q => new
+            {
+                IdCursoHabilitado = q.IdCursoHabilitado,
+                DisplayString = $"{q.NombreCurso} (Sec: {q.NombreSeccion}) - {q.Docente}",
+                Detalles = $"Facultad: {q.NombreFacultad}\nCarrera: {q.NombreCarrera} | Semestre: {q.NombreSemestre}\nDías: {string.Join(", ", q.Dias)} | Horario: {q.HorarioInicio}-{q.HorarioFin}"
+            });
+
             return Ok(res);
         }
 
