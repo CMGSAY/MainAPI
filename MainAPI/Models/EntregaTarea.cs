@@ -41,4 +41,8 @@ public partial class EntregaTarea
     [ForeignKey("IdTarea")]
     [InverseProperty("EntregaTareas")]
     public virtual Tarea IdTareaNavigation { get; set; } = null!;
+
+    [Column("porcentaje_obtenido")]
+    public decimal? PorcentajeObtenido { get; set; }
+
 }

@@ -46,4 +46,10 @@ public partial class Tarea
     [ForeignKey("IdCursoHabilitado")]
     [InverseProperty("Tareas")]
     public virtual CursoHabilitado IdCursoHabilitadoNavigation { get; set; } = null!;
+
+    [Column("fecha_disponibilidad")]
+    public DateTime? FechaDisponibilidad { get; set; }
+    [Column("fecha_cierre")]
+    public DateTime? FechaCierre { get; set; }
+
 }
