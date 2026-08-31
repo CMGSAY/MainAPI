@@ -108,6 +108,7 @@ namespace MainAPI.Controllers
         [HttpPost("curso/{idCursoHabilitado}/tarea")]
         public async Task<IActionResult> PostTarea(int idCursoHabilitado, [FromBody] Tarea dto)
         {
+            // Validar que la sumatoria de todas las tareas y parciales no exceda los 100 puntos (o el tope del curso)
             var cursoObj = await (from ch in _context.CursoHabilitados
                                   join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
                                   join c in _context.Cursos on csc.IdCurso equals c.IdCurso
@@ -140,6 +141,7 @@ namespace MainAPI.Controllers
         [HttpGet("curso/{idCursoHabilitado}/gradebook")]
         public async Task<IActionResult> GetGradebook(int idCursoHabilitado)
         {
+            // Obtener variables globales de configuración
             var confZona = await _context.ConfiguracionSistemas.FirstOrDefaultAsync(c => c.Clave == "zona_minima_examen");
             var confAsist = await _context.ConfiguracionSistemas.FirstOrDefaultAsync(c => c.Clave == "asistencia_minima_porcentaje");
             var confAprob = await _context.ConfiguracionSistemas.FirstOrDefaultAsync(c => c.Clave == "nota_minima_aprobacion");
@@ -148,6 +150,7 @@ namespace MainAPI.Controllers
             decimal asistenciaMinima = confAsist != null ? decimal.Parse(confAsist.Valor) : 80m;
             decimal notaAprobacion = confAprob != null ? decimal.Parse(confAprob.Valor) : 61m;
 
+            // Obtener todos los alumnos inscritos
             var alumnos = await _context.AsignacionCursos
                 .Include(a => a.IdEstudianteNavigation.IdPersonaNavigation)
                 .Where(a => a.IdCursoHabilitado == idCursoHabilitado)
@@ -166,9 +169,10 @@ namespace MainAPI.Controllers
 
             foreach (var a in alumnos)
             {
+                // Calcular Asistencia (solo de clases posteriores a su fecha de asignación)
                 var clasesValidas = sesionesTotales.Where(s => s.FechaSesion >= a.FechaAsignacion).ToList();
                 int totalClases = clasesValidas.Count;
-                decimal porcentajeAsistencia = 100m;
+                decimal porcentajeAsistencia = 100m; // Asumir 100% si no hay clases
 
                 if (totalClases > 0)
                 {
@@ -180,6 +184,7 @@ namespace MainAPI.Controllers
                     porcentajeAsistencia = ((decimal)asistencias / totalClases) * 100m;
                 }
 
+                // Calcular Zona
                 var entregasEstudiante = await _context.EntregaTareas.Where(e => e.IdEstudiante == a.IdEstudiante && tareas.Select(t => t.IdTarea).Contains(e.IdTarea)).ToListAsync();
                 decimal puntosTareas = entregasEstudiante.Sum(e => e.Calificacion ?? 0m);
 
@@ -195,6 +200,7 @@ namespace MainAPI.Controllers
                 decimal notaTotal = zonaAcumulada + nFinal;
                 string estado = notaTotal >= notaAprobacion ? "Aprobado" : "Reprobado";
 
+                // Si no tiene derecho a examen, la nota final ingresada se anula lógicamente (o se bloquea)
                 if (!tieneDerechoExamen) { notaTotal = zonaAcumulada; estado = "Sin Derecho (SDE)"; }
 
                 gradebook.Add(new
@@ -217,6 +223,7 @@ namespace MainAPI.Controllers
             return Ok(gradebook);
         }
 
+        // 5. CALIFICAR UNA ENTREGA (Usando Porcentajes)
         public class CalificarDto { public decimal PorcentajeObtenido { get; set; } public string? Comentarios { get; set; } }
 
         [HttpPut("entrega/{idEntrega}/calificar")]
@@ -225,6 +232,7 @@ namespace MainAPI.Controllers
             var entrega = await _context.EntregaTareas.Include(e => e.IdTareaNavigation).FirstOrDefaultAsync(e => e.IdEntrega == idEntrega);
             if (entrega == null) return NotFound("Entrega no encontrada");
 
+            // Cálculo matemático en el servidor
             entrega.PorcentajeObtenido = d.PorcentajeObtenido;
             entrega.Calificacion = (entrega.IdTareaNavigation.PunteoMaximo * d.PorcentajeObtenido) / 100m;
             entrega.ComentariosCatedratico = d.Comentarios;
