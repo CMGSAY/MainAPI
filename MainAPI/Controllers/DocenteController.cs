@@ -112,6 +112,7 @@ namespace MainAPI.Controllers
                     NumeroSemana = i,
                     Titulo = $"{currentDate:dd MMM} - {endOfWeek:dd MMM}",
                     EsSemanaActual = isCurrent,
+                    FechaInicioSemana = currentDate,
                     Materiales = materialesSemana.Select(m => new { m.IdMaterial, m.Titulo, m.UrlDocumento }),
                     Tareas = tareasSemana.Select(t => new { t.IdTarea, t.Titulo, t.FechaVencimiento, t.PunteoMaximo })
                 });
@@ -131,6 +132,16 @@ namespace MainAPI.Controllers
             public decimal PunteoMaximo { get; set; }
             public DateTime FechaVencimiento { get; set; }
             public bool Visibilidad { get; set; }
+            public DateTime? FechaAsignacion { get; set; }
+        }
+
+        public class CrearMaterialDto
+        {
+            public string Titulo { get; set; } = null!;
+            public string? Descripcion { get; set; }
+            public string UrlDocumento { get; set; } = null!;
+            public bool Visibilidad { get; set; }
+            public DateTime? FechaAsignacion { get; set; }
         }
 
         // 3. CREAR TAREA (Con Validación de Tope de Puntos)
@@ -169,12 +180,36 @@ namespace MainAPI.Controllers
                 PunteoMaximo = dto.PunteoMaximo,
                 FechaVencimiento = dto.FechaVencimiento,
                 Visibilidad = dto.Visibilidad,
-                FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
+                FechaCreacion = dto.FechaAsignacion.HasValue
+                    ? DateOnly.FromDateTime(dto.FechaAsignacion.Value)
+                    : DateOnly.FromDateTime(DateTime.Now)
             };
 
             _context.Tareas.Add(nuevaTarea);
             await _context.SaveChangesAsync();
             return Ok(nuevaTarea);
+        }
+
+        [HttpPost("curso/{idCursoHabilitado}/material")]
+        public async Task<IActionResult> PostMaterial(int idCursoHabilitado, [FromBody] CrearMaterialDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var nuevoMaterial = new MaterialClase
+            {
+                IdCursoHabilitado = idCursoHabilitado,
+                Titulo = dto.Titulo,
+                Descripcion = dto.Descripcion,
+                UrlDocumento = dto.UrlDocumento,
+                Visibilidad = dto.Visibilidad,
+                FechaSubida = dto.FechaAsignacion.HasValue
+                    ? DateOnly.FromDateTime(dto.FechaAsignacion.Value)
+                    : DateOnly.FromDateTime(DateTime.Now)
+            };
+
+            _context.MaterialClases.Add(nuevoMaterial);
+            await _context.SaveChangesAsync();
+            return Ok(nuevoMaterial);
         }
 
         // 4. GRADEBOOK (LIBRO DE CALIFICACIONES EXPERTO)
