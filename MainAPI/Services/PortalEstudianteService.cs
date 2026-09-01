@@ -50,8 +50,8 @@ namespace MainAPI.Services
                 c.IdCursoHabilitado,
                 c.NombreCurso,
                 c.Seccion,
-                Horario = $"{c.HorarioInicio}-{c.HorarioFin}",
-                Docente = $"{c.PrimerNombre} {c.PrimerApellido}"
+                Horario = $"{c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}",
+                Docente = $"{c.PrimerNombre} {c.PrimerApellido}".Trim()
             }).ToList();
         }
 
@@ -162,8 +162,8 @@ namespace MainAPI.Services
                 c.IdCursoHabilitado,
                 c.NombreCurso,
                 c.Seccion,
-                Catedratico = $"{c.PrimerNombre} {c.PrimerApellido}",
-                Horario = $"{c.HorarioInicio}-{c.HorarioFin}"
+                Catedratico = $"{c.PrimerNombre} {c.PrimerApellido}".Trim(),
+                Horario = $"{c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}"
             }).ToList();
 
             return (true, "OK", cursosResult);
