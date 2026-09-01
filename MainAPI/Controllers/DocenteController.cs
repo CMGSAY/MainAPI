@@ -103,8 +103,9 @@ namespace MainAPI.Controllers
                     m.FechaSubida.Value.ToDateTime(TimeOnly.MinValue) >= currentDate &&
                     m.FechaSubida.Value.ToDateTime(TimeOnly.MinValue) <= endOfWeek).ToList();
 
-                var tareasSemana = tareas.Where(t => t.FechaVencimiento >= currentDate &&
-                    t.FechaVencimiento <= endOfWeek.AddDays(1).AddSeconds(-1)).ToList();
+                var tareasSemana = tareas.Where(t => t.FechaCreacion.HasValue &&
+                    t.FechaCreacion.Value.ToDateTime(TimeOnly.MinValue) >= currentDate &&
+                    t.FechaCreacion.Value.ToDateTime(TimeOnly.MinValue) <= endOfWeek).ToList();
 
                 semanas.Add(new
                 {
