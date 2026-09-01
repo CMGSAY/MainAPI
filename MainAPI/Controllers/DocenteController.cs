@@ -46,12 +46,24 @@ namespace MainAPI.Controllers
                                     NombreCurso = c.NombreCurso,
                                     Seccion = sec.NombreSeccion,
                                     Carrera = car.NombreCarrera,
-                                    Horario = ch.HorarioInicio + " - " + ch.HorarioFin,
+                                    HorarioInicio = ch.HorarioInicio,
+                                    HorarioFin = ch.HorarioFin,
                                     Estado = ch.Estado,
                                     EsHistorico = (ch.Estado != "activo" || !ciclo.Estado.GetValueOrDefault())
                                 }).ToListAsync();
 
-            return Ok(cursos);
+            var result = cursos.Select(c => new
+            {
+                c.IdCursoHabilitado,
+                c.NombreCurso,
+                c.Seccion,
+                c.Carrera,
+                Horario = $"{c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}",
+                c.Estado,
+                c.EsHistorico
+            }).ToList();
+
+            return Ok(result);
         }
 
         // 2. OBTENER EL CURSO POR SEMANAS (Algoritmo de Agrupación)
