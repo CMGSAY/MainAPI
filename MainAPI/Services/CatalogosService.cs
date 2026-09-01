@@ -188,7 +188,7 @@ namespace MainAPI.Services
         {
             var e = await _context.Semestres.FindAsync(id);
             if (e == null) return null;
-            e.NumeroSemestre = dto.NumeroSemestre;
+            e.NumeroOrden = dto.NumeroOrden;
             e.NombreSemestre = dto.NombreSemestre;
             await _context.SaveChangesAsync();
             return e;

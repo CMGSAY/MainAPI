@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -47,6 +47,9 @@ public partial class PerfilAdministrador
 
     [Column("fecha_contratacion")]
     public DateOnly? FechaContratacion { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [ForeignKey("IdMunicipio")]
     [InverseProperty("PerfilAdministradors")]

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -36,6 +36,9 @@ public partial class Persona
     [Column("segundo_apellido")]
     [StringLength(100)]
     public string? SegundoApellido { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdPersonaNavigation")]
     public virtual PerfilAdministrador? PerfilAdministrador { get; set; }
