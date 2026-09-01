@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -26,6 +26,9 @@ public partial class Curso
     [Column("punteo_maximo_total")]
     [Precision(5, 2)]
     public decimal? PunteoMaximoTotal { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdCursoNavigation")]
     public virtual ICollection<CarreraSemestreCurso> CarreraSemestreCursos { get; set; } = new List<CarreraSemestreCurso>();

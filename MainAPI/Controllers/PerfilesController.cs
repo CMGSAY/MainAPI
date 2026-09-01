@@ -1,9 +1,8 @@
-﻿using MainAPI.Data;
-using MainAPI.Models;
 using MainAPI.Models.DTOs;
+using MainAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace MainAPI.Controllers
 {
@@ -12,113 +11,85 @@ namespace MainAPI.Controllers
     [Authorize]
     public class PerfilesController : ControllerBase
     {
-        private readonly MainDbContext _context;
-        public PerfilesController(MainDbContext context) => _context = context;
+        private readonly IPerfilesService _perfilesService;
+
+        public PerfilesController(IPerfilesService perfilesService)
+        {
+            _perfilesService = perfilesService;
+        }
 
         [HttpGet("estudiantes")]
-        public async Task<IActionResult> GetEstudiantes() => Ok(await _context.PerfilEstudiantes.ToListAsync());
+        public async Task<IActionResult> GetEstudiantes()
+        {
+            return Ok(await _perfilesService.GetEstudiantesAsync());
+        }
 
         [HttpGet("estudiantes/busqueda")]
         public async Task<IActionResult> GetAllEstudiantesBusqueda()
         {
-            var res = await _context.PerfilEstudiantes
-                .Include(p => p.IdPersonaNavigation)
-                .Select(p => new {
-                    IdEstudiante = p.IdEstudiante,
-                    Carnet = p.Carnet,
-                    DisplayString = p.IdPersonaNavigation.PrimerNombre + " " + p.IdPersonaNavigation.PrimerApellido
-                })
-                .ToListAsync();
-            return Ok(res);
+            return Ok(await _perfilesService.GetAllEstudiantesBusquedaAsync());
         }
 
         [HttpPost("estudiantes")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostEstudiante(PerfilEstudianteDto d)
         {
-            var e = new PerfilEstudiante { IdPersona = d.IdPersona, Carnet = d.Carnet, TelefonoPrincipal = d.TelefonoPrincipal, DireccionCalleAvenida = d.DireccionCalleAvenida, Zona = d.Zona, IdMunicipio = d.IdMunicipio, FechaIngreso = d.FechaIngreso };
-            _context.PerfilEstudiantes.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _perfilesService.PostEstudianteAsync(d));
         }
 
         [HttpGet("catedraticos")]
-        public async Task<IActionResult> GetCatedraticos() => Ok(await _context.PerfilCatedraticos.ToListAsync());
+        public async Task<IActionResult> GetCatedraticos()
+        {
+            return Ok(await _perfilesService.GetCatedraticosAsync());
+        }
 
         [HttpPost("catedraticos")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostCatedratico(PerfilCatedraticoDto d)
         {
-            var e = new PerfilCatedratico { IdPersona = d.IdPersona, Dpi = d.Dpi, NumeroColegiadoActivo = d.NumeroColegiadoActivo, TelefonoPrincipal = d.TelefonoPrincipal, DireccionCalleAvenida = d.DireccionCalleAvenida, Zona = d.Zona, IdMunicipio = d.IdMunicipio, Especialidad = d.Especialidad, FechaContratacion = d.FechaContratacion };
-            _context.PerfilCatedraticos.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _perfilesService.PostCatedraticoAsync(d));
         }
 
         [HttpGet("admins")]
         [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> GetAdmins() => Ok(await _context.PerfilAdministradors.ToListAsync());
+        public async Task<IActionResult> GetAdmins()
+        {
+            return Ok(await _perfilesService.GetAdminsAsync());
+        }
 
         [HttpPost("admins")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostAdmin(PerfilAdministradorDto d)
         {
-            var e = new PerfilAdministrador { IdPersona = d.IdPersona, Dpi = d.Dpi, NumeroColegiadoActivo = d.NumeroColegiadoActivo, TelefonoPrincipal = d.TelefonoPrincipal, DireccionCalleAvenida = d.DireccionCalleAvenida, Zona = d.Zona, IdMunicipio = d.IdMunicipio, Especialidad = d.Especialidad, FechaContratacion = d.FechaContratacion };
-            _context.PerfilAdministradors.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _perfilesService.PostAdminAsync(d));
         }
 
-        // Para Catedráticos
         [HttpGet("catedraticos/busqueda")]
         public async Task<IActionResult> GetAllCatedraticosBusqueda()
         {
-            var res = await _context.PerfilCatedraticos
-                .Include(p => p.IdPersonaNavigation)
-                .Select(p => new {
-                    IdCatedratico = p.IdCatedratico,
-                    Dpi = p.Dpi,
-                    DisplayString = p.IdPersonaNavigation.PrimerNombre + " " + p.IdPersonaNavigation.PrimerApellido
-                })
-                .ToListAsync();
-            return Ok(res);
+            return Ok(await _perfilesService.GetAllCatedraticosBusquedaAsync());
         }
 
         [HttpGet("validar-dpi/{dpi}")]
         [AllowAnonymous]
         public async Task<IActionResult> ValidarDpiDuplicado(string dpi)
         {
-            if (string.IsNullOrWhiteSpace(dpi)) return BadRequest();
-
-            bool existeComoCatedratico = await _context.PerfilCatedraticos.AnyAsync(p => p.Dpi == dpi);
-            bool existeComoAdmin = await _context.PerfilAdministradors.AnyAsync(p => p.Dpi == dpi);
-
-            return Ok(existeComoCatedratico || existeComoAdmin);
+            return Ok(await _perfilesService.ValidarDpiDuplicadoAsync(dpi));
         }
-        // Para Estudiantes (En PerfilEstudiantesController o PerfilesController)
+
         [HttpGet("estudiantes/municipio/{idMunicipio}")]
         public async Task<IActionResult> GetEstudiantesByMunicipio(int idMunicipio)
         {
-            var res = await _context.PerfilEstudiantes
-                .Include(p => p.IdPersonaNavigation)
-                .Where(p => p.IdMunicipio == idMunicipio)
-                .Select(p => new {
-                    IdEstudiante = p.IdEstudiante,
-                    DisplayString = (p.Carnet ?? p.IdEstudiante.ToString()) + " - " + p.IdPersonaNavigation.PrimerNombre + " " + p.IdPersonaNavigation.PrimerApellido
-                })
-                .ToListAsync();
-            return Ok(res);
+            return Ok(await _perfilesService.GetEstudiantesByMunicipioAsync(idMunicipio));
         }
+
         [HttpPut("estudiantes/{idEstudiante}/semestre/{idSemestre}")]
         public async Task<IActionResult> AsignarSemestre(int idEstudiante, int idSemestre)
         {
-            var estudiante = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
-            if (estudiante == null) return NotFound("Estudiante no encontrado.");
+            var result = await _perfilesService.AsignarSemestreAsync(idEstudiante, idSemestre);
+            if (!result.IsSuccess) return NotFound(result.Message);
 
-            estudiante.IdSemestreActual = idSemestre;
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Semestre asignado correctamente." });
+            return Ok(new { message = result.Message });
         }
 
         public class RutaAcademicaDto
@@ -130,16 +101,10 @@ namespace MainAPI.Controllers
         [HttpPut("estudiantes/{idEstudiante}/ruta-academica")]
         public async Task<IActionResult> AsignarRutaAcademica(int idEstudiante, [FromBody] RutaAcademicaDto dto)
         {
-            var estudiante = await _context.PerfilEstudiantes.FindAsync(idEstudiante);
-            if (estudiante == null) return NotFound("Estudiante no encontrado.");
+            var result = await _perfilesService.AsignarRutaAcademicaAsync(idEstudiante, dto);
+            if (!result.IsSuccess) return NotFound(result.Message);
 
-            estudiante.IdCarrera = dto.IdCarrera;
-            estudiante.IdSemestreActual = dto.IdSemestre;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Ruta académica asignada correctamente." });
+            return Ok(new { message = result.Message });
         }
-
     }
 }

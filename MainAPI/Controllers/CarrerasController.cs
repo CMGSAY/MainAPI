@@ -1,9 +1,8 @@
-﻿using MainAPI.Data;
-using MainAPI.Models;
 using MainAPI.Models.DTOs;
+using MainAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace MainAPI.Controllers
 {
@@ -12,87 +11,84 @@ namespace MainAPI.Controllers
     [Authorize]
     public class CarrerasController : ControllerBase
     {
-        private readonly MainDbContext _context;
-        public CarrerasController(MainDbContext context) => _context = context;
+        private readonly ICarrerasService _carrerasService;
+
+        public CarrerasController(ICarrerasService carrerasService)
+        {
+            _carrerasService = carrerasService;
+        }
 
         [HttpGet]
-        public async Task<IActionResult> Get() => Ok(await _context.Carreras.ToListAsync());
+        public async Task<IActionResult> Get()
+        {
+            return Ok(await _carrerasService.GetCarrerasAsync());
+        }
 
         [HttpPost]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Post(CarreraDto d)
         {
-            var e = new Carrera { NombreCarrera = d.NombreCarrera, Descripcion = d.Descripcion, IdFacultad = d.IdFacultad, CantidadSemestres = d.CantidadSemestres, CreditosTotales = d.CreditosTotales, Activa = d.Activa ?? true };
-            _context.Carreras.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _carrerasService.PostCarreraAsync(d));
+        }
+
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Put(int id, CarreraDto d)
+        {
+            var res = await _carrerasService.PutCarreraAsync(id, d);
+            return res != null ? Ok(res) : NotFound();
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var res = await _carrerasService.DeleteCarreraAsync(id);
+            return res ? Ok(new { mensaje = "Deshabilitado" }) : NotFound();
+        }
+        
+        [HttpPut("{id}/habilitar")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> Habilitar(int id)
+        {
+            var res = await _carrerasService.HabilitarCarreraAsync(id);
+            return res ? Ok(new { mensaje = "Habilitado" }) : NotFound();
         }
 
         [HttpPost("{idCarrera}/semestres/{idSemestre}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> AsignarSemestre(int idCarrera, int idSemestre)
         {
-            if (await _context.CarreraSemestres.AnyAsync(cs => cs.IdCarrera == idCarrera && cs.IdSemestre == idSemestre))
-                return BadRequest(new { Mensaje = "Ya existe esta asignación." });
-            var e = new CarreraSemestre { IdCarrera = idCarrera, IdSemestre = idSemestre };
-            _context.CarreraSemestres.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            var result = await _carrerasService.AsignarSemestreAsync(idCarrera, idSemestre);
+            if (!result.IsSuccess) return BadRequest(new { Mensaje = result.Message });
+
+            return Ok(result.Result);
         }
 
         [HttpPost("carrera-semestre/{idCarreraSemestre}/cursos/{idCurso}")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> AsignarCurso(int idCarreraSemestre, int idCurso)
         {
-            if (await _context.CarreraSemestreCursos.AnyAsync(csc => csc.IdCarreraSemestre == idCarreraSemestre && csc.IdCurso == idCurso))
-                return BadRequest(new { Mensaje = "Ya existe esta asignación." });
-            var e = new CarreraSemestreCurso { IdCarreraSemestre = idCarreraSemestre, IdCurso = idCurso };
-            _context.CarreraSemestreCursos.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            var result = await _carrerasService.AsignarCursoAsync(idCarreraSemestre, idCurso);
+            if (!result.IsSuccess) return BadRequest(new { Mensaje = result.Message });
+
+            return Ok(result.Result);
         }
 
         [HttpPost("vincular-curso-pensum")]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> VincularCursoAPensum([FromBody] VincularPensumDto d)
         {
-        
-            var carreraSemestre = await _context.CarreraSemestres
-                .FirstOrDefaultAsync(cs => cs.IdCarrera == d.IdCarrera && cs.IdSemestre == d.IdSemestre);
+            var result = await _carrerasService.VincularCursoAPensumAsync(d);
+            if (!result.IsSuccess) return BadRequest(new { Mensaje = result.Message });
 
-            if (carreraSemestre == null)
-            {
-                carreraSemestre = new CarreraSemestre { IdCarrera = d.IdCarrera, IdSemestre = d.IdSemestre };
-                _context.CarreraSemestres.Add(carreraSemestre);
-                await _context.SaveChangesAsync(); 
-            }
-
-            if (await _context.CarreraSemestreCursos.AnyAsync(csc => csc.IdCarreraSemestre == carreraSemestre.IdCarreraSemestre && csc.IdCurso == d.IdCurso))
-            {
-                return BadRequest(new { Mensaje = "Este curso ya está asignado a esta carrera en este semestre." });
-            }
-
-            var asignacion = new CarreraSemestreCurso { IdCarreraSemestre = carreraSemestre.IdCarreraSemestre, IdCurso = d.IdCurso };
-            _context.CarreraSemestreCursos.Add(asignacion);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { Mensaje = "Curso asignado exitosamente al pensum." });
+            return Ok(new { Mensaje = result.Message });
         }
 
         [HttpGet("{idCarrera}/semestres/{idSemestre}/cursos")]
         public async Task<IActionResult> GetCursosPorCarreraYSemestre(int idCarrera, int idSemestre)
         {
-            var cursos = await (from csc in _context.CarreraSemestreCursos
-                                join cs in _context.CarreraSemestres on csc.IdCarreraSemestre equals cs.IdCarreraSemestre
-                                join c in _context.Cursos on csc.IdCurso equals c.IdCurso
-                                where cs.IdCarrera == idCarrera && cs.IdSemestre == idSemestre
-                                select new
-                                {
-                                    IdCarreraSemestreCurso = csc.IdCarreraSemestreCurso,
-                                    NombreCurso = c.NombreCurso
-                                }).ToListAsync();
-
-            return Ok(cursos);
+            return Ok(await _carrerasService.GetCursosPorCarreraYSemestreAsync(idCarrera, idSemestre));
         }
     }
 }

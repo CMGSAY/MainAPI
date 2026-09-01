@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -22,6 +22,9 @@ public partial class Facultad
 
     [Column("id_sede")]
     public int IdSede { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdFacultadNavigation")]
     public virtual ICollection<Carrera> Carreras { get; set; } = new List<Carrera>();

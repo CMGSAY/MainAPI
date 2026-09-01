@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,6 +19,9 @@ public partial class Semestre
 
     [Column("numero_orden")]
     public int NumeroOrden { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdSemestreNavigation")]
     public virtual ICollection<CarreraSemestre> CarreraSemestres { get; set; } = new List<CarreraSemestre>();

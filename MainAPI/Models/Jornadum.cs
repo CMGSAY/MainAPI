@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -22,6 +22,9 @@ public partial class Jornadum
 
     [Column("hora_fin")]
     public TimeOnly? HoraFin { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdJornadaNavigation")]
     public virtual ICollection<CursoHabilitado> CursoHabilitados { get; set; } = new List<CursoHabilitado>();

@@ -1,9 +1,9 @@
-﻿using MainAPI.Data;
-using MainAPI.Models;
 using MainAPI.Models.DTOs;
+using MainAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace MainAPI.Controllers
 {
@@ -12,90 +12,85 @@ namespace MainAPI.Controllers
     [Authorize(Roles = "Docente,Administrador")]
     public class PortalDocenteController : ControllerBase
     {
-        private readonly MainDbContext _context;
-        public PortalDocenteController(MainDbContext context) => _context = context;
+        private readonly IPortalDocenteService _docenteService;
+
+        public PortalDocenteController(IPortalDocenteService docenteService)
+        {
+            _docenteService = docenteService;
+        }
+
+        private async Task<int> GetCatedraticoId()
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString)) return 0;
+            int userId = int.Parse(userIdString);
+            return await _docenteService.GetCatedraticoIdAsync(userId);
+        }
 
         [HttpGet("mis-cursos")]
         public async Task<IActionResult> GetMisCursos()
         {
-            // Extraemos el ID de usuario desde el token JWT
-            var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdString)) return Unauthorized("Token inválido.");
-            int userId = int.Parse(userIdString);
+            int idCatedratico = await GetCatedraticoId();
+            if (idCatedratico == 0) return Unauthorized("Perfil de catedrático no encontrado o Token inválido.");
 
-            // Buscamos el perfil del catedrático
-            var catedratico = await _context.PerfilCatedraticos.FirstOrDefaultAsync(p => p.IdPersonaNavigation.LoginUserId == userId);
-            if (catedratico == null) return Unauthorized("Perfil de catedrático no encontrado.");
-
-            var cursos = await _context.CursoHabilitados
-                .Include(c => c.IdCarreraSemestreCursoNavigation)
-                    .ThenInclude(csc => csc.IdCursoNavigation)
-                .Where(c => c.IdCatedratico == catedratico.IdCatedratico)
-                .Select(c => new {
-                    IdCursoHabilitado = c.IdCursoHabilitado,
-                    Curso = c.IdCarreraSemestreCursoNavigation.IdCursoNavigation.NombreCurso,
-                    Estado = c.Estado
-                }).ToListAsync();
-
-            return Ok(cursos);
+            return Ok(await _docenteService.GetMisCursosAsync(idCatedratico));
         }
 
         [HttpGet("materiales")]
-        public async Task<IActionResult> GetMateriales() => Ok(await _context.MaterialClases.ToListAsync());
+        public async Task<IActionResult> GetMateriales()
+        {
+            return Ok(await _docenteService.GetMaterialesAsync());
+        }
 
         [HttpPost("materiales")]
         public async Task<IActionResult> PostMaterial(MaterialDto d)
         {
-            var e = new MaterialClase { IdCursoHabilitado = d.IdCursoHabilitado, Titulo = d.Titulo, Descripcion = d.Descripcion, TipoArchivo = d.TipoArchivo, UrlDocumento = d.UrlDocumento, FechaSubida = DateOnly.FromDateTime(DateTime.Now), Visibilidad = true };
-            _context.MaterialClases.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _docenteService.PostMaterialAsync(d));
         }
 
         [HttpGet("tareas")]
-        public async Task<IActionResult> GetTareas() => Ok(await _context.Tareas.ToListAsync());
+        public async Task<IActionResult> GetTareas()
+        {
+            return Ok(await _docenteService.GetTareasAsync());
+        }
 
         [HttpPost("tareas")]
         public async Task<IActionResult> PostTarea(TareaDto d)
         {
-            var e = new Tarea { IdCursoHabilitado = d.IdCursoHabilitado, Titulo = d.Titulo, Descripcion = d.Descripcion, UrlDocumentoReferencia = d.UrlDocumentoReferencia, FechaVencimiento = d.FechaVencimiento, PunteoMaximo = d.PunteoMaximo, FechaCreacion = DateOnly.FromDateTime(DateTime.Now), Visibilidad = true };
-            _context.Tareas.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _docenteService.PostTareaAsync(d));
         }
 
         [HttpGet("entregas")]
-        public async Task<IActionResult> GetEntregas() => Ok(await _context.EntregaTareas.ToListAsync());
+        public async Task<IActionResult> GetEntregas()
+        {
+            return Ok(await _docenteService.GetEntregasAsync());
+        }
 
         [HttpPut("entregas/{id}/calificar")]
         public async Task<IActionResult> CalificarEntrega(int id, CalificacionTareaDto d)
         {
-            var e = await _context.EntregaTareas.FindAsync(id);
-            if (e == null) return NotFound();
-            e.Calificacion = d.Calificacion; e.ComentariosCatedratico = d.Comentarios;
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            var result = await _docenteService.CalificarEntregaAsync(id, d);
+            if (!result.IsSuccess) return NotFound();
+
+            return Ok(result.Result);
         }
 
         [HttpGet("evaluaciones")]
-        public async Task<IActionResult> GetEvaluaciones() => Ok(await _context.EvaluacionFijas.ToListAsync());
+        public async Task<IActionResult> GetEvaluaciones()
+        {
+            return Ok(await _docenteService.GetEvaluacionesAsync());
+        }
 
         [HttpPost("evaluaciones")]
         public async Task<IActionResult> PostEvaluacion(EvaluacionFijaDto d)
         {
-            var e = new EvaluacionFija { IdCursoHabilitado = d.IdCursoHabilitado, TipoEvaluacion = d.TipoEvaluacion, PunteoAsignado = d.PunteoAsignado, FechaEvaluacion = d.FechaEvaluacion };
-            _context.EvaluacionFijas.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _docenteService.PostEvaluacionAsync(d));
         }
 
         [HttpPost("evaluaciones/notas")]
         public async Task<IActionResult> PostNota(CalificacionEvaluacionDto d)
         {
-            var e = new CalificacionEvaluacion { IdEvaluacion = d.IdEvaluacion, IdEstudiante = d.IdEstudiante, NotaObtenida = d.NotaObtenida };
-            _context.CalificacionEvaluacions.Add(e);
-            await _context.SaveChangesAsync();
-            return Ok(e);
+            return Ok(await _docenteService.PostNotaAsync(d));
         }
     }
 }

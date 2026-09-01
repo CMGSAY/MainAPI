@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -25,6 +25,9 @@ public partial class Seccion
 
     [Column("id_semestre")]
     public int? IdSemestre { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdSeccionNavigation")]
     public virtual ICollection<CursoHabilitado> CursoHabilitados { get; set; } = new List<CursoHabilitado>();

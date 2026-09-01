@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -31,6 +31,9 @@ public partial class Sede
     [Column("telefono_contacto_principal")]
     [StringLength(15)]
     public string? TelefonoContactoPrincipal { get; set; }
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdSedeNavigation")]
     public virtual ICollection<Facultad> Facultads { get; set; } = new List<Facultad>();

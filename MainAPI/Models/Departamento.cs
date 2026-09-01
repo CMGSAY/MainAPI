@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +16,9 @@ public partial class Departamento
     [Column("nombre_departamento")]
     [StringLength(100)]
     public string NombreDepartamento { get; set; } = null!;
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdDepartamentoNavigation")]
     public virtual ICollection<Municipio> Municipios { get; set; } = new List<Municipio>();

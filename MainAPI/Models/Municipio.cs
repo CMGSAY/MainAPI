@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,6 +19,9 @@ public partial class Municipio
     [Column("nombre_municipio")]
     [StringLength(100)]
     public string NombreMunicipio { get; set; } = null!;
+
+    [Column("activo")]
+    public bool? Activo { get; set; } = true;
 
     [ForeignKey("IdDepartamento")]
     [InverseProperty("Municipios")]

@@ -62,6 +62,16 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<MainDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<MainAPI.Services.IDocenteService, MainAPI.Services.DocenteService>();
+builder.Services.AddScoped<MainAPI.Services.IPortalEstudianteService, MainAPI.Services.PortalEstudianteService>();
+builder.Services.AddScoped<MainAPI.Services.IAsignacionesService, MainAPI.Services.AsignacionesService>();
+builder.Services.AddScoped<MainAPI.Services.IPerfilesService, MainAPI.Services.PerfilesService>();
+builder.Services.AddScoped<MainAPI.Services.IPortalDocenteService, MainAPI.Services.PortalDocenteService>();
+builder.Services.AddScoped<MainAPI.Services.ICarrerasService, MainAPI.Services.CarrerasService>();
+builder.Services.AddScoped<MainAPI.Services.IOperativoService, MainAPI.Services.OperativoService>();
+builder.Services.AddScoped<MainAPI.Services.IPersonasService, MainAPI.Services.PersonasService>();
+builder.Services.AddScoped<MainAPI.Services.ICatalogosService, MainAPI.Services.CatalogosService>();
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -74,7 +84,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
