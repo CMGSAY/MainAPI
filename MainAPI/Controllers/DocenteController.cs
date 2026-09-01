@@ -111,8 +111,8 @@ namespace MainAPI.Controllers
                     NumeroSemana = i,
                     Titulo = $"{currentDate:dd MMM} - {endOfWeek:dd MMM}",
                     EsSemanaActual = isCurrent,
-                    Materiales = materialesSemana,
-                    Tareas = tareasSemana
+                    Materiales = materialesSemana.Select(m => new { m.IdMaterial, m.Titulo, m.UrlDocumento }),
+                    Tareas = tareasSemana.Select(t => new { t.IdTarea, t.Titulo, t.FechaVencimiento, t.PunteoMaximo })
                 });
 
                 currentDate = currentDate.AddDays(7);
