@@ -59,6 +59,7 @@ namespace MainAPI.Services
         public async Task<object> PostMunicipioAsync(Municipio dto)
         {
             dto.Activo = true;
+            dto.IdDepartamentoNavigation = null;
             _context.Municipios.Add(dto);
             await _context.SaveChangesAsync();
             return dto;
@@ -98,6 +99,7 @@ namespace MainAPI.Services
         public async Task<object> PostSedeAsync(Sede dto)
         {
             dto.Activo = true;
+            dto.IdMunicipioNavigation = null;
             _context.Sedes.Add(dto);
             await _context.SaveChangesAsync();
             return dto;
@@ -139,6 +141,7 @@ namespace MainAPI.Services
         public async Task<object> PostFacultadAsync(Facultad dto)
         {
             dto.Activo = true;
+            dto.IdSedeNavigation = null;
             _context.Facultads.Add(dto);
             await _context.SaveChangesAsync();
             return dto;

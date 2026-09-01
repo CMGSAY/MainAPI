@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -37,7 +37,7 @@ public partial class Carrera
 
     [ForeignKey("IdFacultad")]
     [InverseProperty("Carreras")]
-    public virtual Facultad IdFacultadNavigation { get; set; } = null!;
+    public virtual Facultad? IdFacultadNavigation { get; set; }
 
     [InverseProperty("IdCarreraNavigation")]
     public virtual ICollection<PerfilEstudiante> PerfilEstudiantes { get; set; } = new List<PerfilEstudiante>();

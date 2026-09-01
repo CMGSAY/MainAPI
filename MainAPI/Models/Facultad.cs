@@ -31,5 +31,5 @@ public partial class Facultad
 
     [ForeignKey("IdSede")]
     [InverseProperty("Facultads")]
-    public virtual Sede IdSedeNavigation { get; set; } = null!;
+    public virtual Sede? IdSedeNavigation { get; set; }
 }

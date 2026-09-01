@@ -21,5 +21,6 @@ public partial class Departamento
     public bool? Activo { get; set; } = true;
 
     [InverseProperty("IdDepartamentoNavigation")]
+    [System.Text.Json.Serialization.JsonIgnore]
     public virtual ICollection<Municipio> Municipios { get; set; } = new List<Municipio>();
 }

@@ -31,5 +31,5 @@ public partial class Aula
 
     [ForeignKey("IdModulo")]
     [InverseProperty("Aulas")]
-    public virtual ModuloEdificio IdModuloNavigation { get; set; } = null!;
+    public virtual ModuloEdificio? IdModuloNavigation { get; set; }
 }

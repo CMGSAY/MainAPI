@@ -32,5 +32,5 @@ public partial class ModuloEdificio
 
     [ForeignKey("IdSede")]
     [InverseProperty("ModuloEdificios")]
-    public virtual Sede IdSedeNavigation { get; set; } = null!;
+    public virtual Sede? IdSedeNavigation { get; set; }
 }

@@ -25,7 +25,8 @@ public partial class Municipio
 
     [ForeignKey("IdDepartamento")]
     [InverseProperty("Municipios")]
-    public virtual Departamento IdDepartamentoNavigation { get; set; } = null!;
+    [System.Text.Json.Serialization.JsonIgnore]
+    public virtual Departamento? IdDepartamentoNavigation { get; set; }
 
     [InverseProperty("IdMunicipioNavigation")]
     public virtual ICollection<PerfilAdministrador> PerfilAdministradors { get; set; } = new List<PerfilAdministrador>();
