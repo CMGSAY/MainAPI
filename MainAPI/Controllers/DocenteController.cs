@@ -36,8 +36,10 @@ namespace MainAPI.Controllers
                                 join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
                                 join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
                                 join cs in _context.CarreraSemestres on csc.IdCarreraSemestre equals cs.IdCarreraSemestre
+                                join sem in _context.Semestres on cs.IdSemestre equals sem.IdSemestre
                                 join c in _context.Cursos on csc.IdCurso equals c.IdCurso
                                 join car in _context.Carreras on cs.IdCarrera equals car.IdCarrera
+                                join fac in _context.Facultads on car.IdFacultad equals fac.IdFacultad
                                 join ciclo in _context.CicloEscolars on ch.IdCiclo equals ciclo.IdCiclo
                                 where ch.IdCatedratico == idDocente
                                 select new
@@ -46,6 +48,8 @@ namespace MainAPI.Controllers
                                     NombreCurso = c.NombreCurso,
                                     Seccion = sec.NombreSeccion,
                                     Carrera = car.NombreCarrera,
+                                    Facultad = fac.NombreFacultad,
+                                    Semestre = sem.NombreSemestre,
                                     HorarioInicio = ch.HorarioInicio,
                                     HorarioFin = ch.HorarioFin,
                                     Estado = ch.Estado,
@@ -58,6 +62,8 @@ namespace MainAPI.Controllers
                 c.NombreCurso,
                 c.Seccion,
                 c.Carrera,
+                c.Facultad,
+                c.Semestre,
                 Horario = $"{c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}",
                 c.Estado,
                 c.EsHistorico
@@ -251,6 +257,25 @@ namespace MainAPI.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(new { mensaje = "Calificación guardada.", PuntosCalculados = entrega.Calificacion });
+        }
+
+        // 6. OBTENER PARTICIPANTES DEL CURSO
+        [HttpGet("{idCursoHabilitado}/participantes")]
+        public async Task<IActionResult> GetParticipantes(int idCursoHabilitado)
+        {
+            var participantes = await _context.AsignacionCursos
+                .Include(a => a.IdEstudianteNavigation.IdPersonaNavigation)
+                .Where(a => a.IdCursoHabilitado == idCursoHabilitado && a.Estado == "asignado")
+                .Select(a => new
+                {
+                    IdEstudiante = a.IdEstudiante,
+                    Carnet = a.IdEstudianteNavigation.Carnet,
+                    NombreCompleto = $"{a.IdEstudianteNavigation.IdPersonaNavigation.PrimerNombre} {a.IdEstudianteNavigation.IdPersonaNavigation.PrimerApellido}",
+                    Correo = ""
+                })
+                .ToListAsync();
+
+            return Ok(participantes);
         }
     }
 }
