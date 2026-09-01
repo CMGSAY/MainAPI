@@ -122,10 +122,22 @@ namespace MainAPI.Controllers
             return Ok(semanas);
         }
 
+        // DTO PARA CREAR TAREA (Evita errores de validación de propiedades de navegación)
+        public class CrearTareaDto
+        {
+            public string Titulo { get; set; } = null!;
+            public string? Descripcion { get; set; }
+            public decimal PunteoMaximo { get; set; }
+            public DateTime FechaVencimiento { get; set; }
+            public bool Visibilidad { get; set; }
+        }
+
         // 3. CREAR TAREA (Con Validación de Tope de Puntos)
         [HttpPost("curso/{idCursoHabilitado}/tarea")]
-        public async Task<IActionResult> PostTarea(int idCursoHabilitado, [FromBody] Tarea dto)
+        public async Task<IActionResult> PostTarea(int idCursoHabilitado, [FromBody] CrearTareaDto dto)
         {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
             // Validar que la sumatoria de todas las tareas y parciales no exceda los 100 puntos (o el tope del curso)
             var cursoObj = await (from ch in _context.CursoHabilitados
                                   join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
@@ -148,11 +160,20 @@ namespace MainAPI.Controllers
                 return BadRequest($"Error: La creación de esta tarea ({dto.PunteoMaximo} pts) excede el máximo del curso ({tope} pts). Puntos ocupados actuales: {puntosActualesTareas + puntosParciales}.");
             }
 
-            dto.IdCursoHabilitado = idCursoHabilitado;
-            dto.FechaCreacion = DateOnly.FromDateTime(DateTime.Now);
-            _context.Tareas.Add(dto);
+            var nuevaTarea = new Tarea
+            {
+                IdCursoHabilitado = idCursoHabilitado,
+                Titulo = dto.Titulo,
+                Descripcion = dto.Descripcion,
+                PunteoMaximo = dto.PunteoMaximo,
+                FechaVencimiento = dto.FechaVencimiento,
+                Visibilidad = dto.Visibilidad,
+                FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
+            };
+
+            _context.Tareas.Add(nuevaTarea);
             await _context.SaveChangesAsync();
-            return Ok(dto);
+            return Ok(nuevaTarea);
         }
 
         // 4. GRADEBOOK (LIBRO DE CALIFICACIONES EXPERTO)
