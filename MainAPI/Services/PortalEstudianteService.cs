@@ -39,10 +39,20 @@ namespace MainAPI.Services
                                     IdCursoHabilitado = ch.IdCursoHabilitado,
                                     NombreCurso = c.NombreCurso,
                                     Seccion = sec.NombreSeccion,
-                                    Horario = $"{ch.HorarioInicio}-{ch.HorarioFin}",
-                                    Docente = $"{per.PrimerNombre} {per.PrimerApellido}"
+                                    HorarioInicio = ch.HorarioInicio,
+                                    HorarioFin = ch.HorarioFin,
+                                    PrimerNombre = per.PrimerNombre,
+                                    PrimerApellido = per.PrimerApellido
                                 }).ToListAsync();
-            return cursos;
+
+            return cursos.Select(c => new
+            {
+                c.IdCursoHabilitado,
+                c.NombreCurso,
+                c.Seccion,
+                Horario = $"{c.HorarioInicio}-{c.HorarioFin}",
+                Docente = $"{c.PrimerNombre} {c.PrimerApellido}"
+            }).ToList();
         }
 
         public async Task<(bool IsSuccess, string Message, object? Semanas)> GetSemanasCursoAsync(int idCursoHabilitado)
@@ -141,11 +151,22 @@ namespace MainAPI.Services
                                                IdCursoHabilitado = ch.IdCursoHabilitado,
                                                NombreCurso = cur.NombreCurso,
                                                Seccion = sec.NombreSeccion,
-                                               Catedratico = $"{per.PrimerNombre} {per.PrimerApellido}",
-                                               Horario = $"{ch.HorarioInicio}-{ch.HorarioFin}"
+                                               PrimerNombre = per.PrimerNombre,
+                                               PrimerApellido = per.PrimerApellido,
+                                               HorarioInicio = ch.HorarioInicio,
+                                               HorarioFin = ch.HorarioFin
                                            }).ToListAsync();
 
-            return (true, "OK", cursosDisponibles);
+            var cursosResult = cursosDisponibles.Select(c => new
+            {
+                c.IdCursoHabilitado,
+                c.NombreCurso,
+                c.Seccion,
+                Catedratico = $"{c.PrimerNombre} {c.PrimerApellido}",
+                Horario = $"{c.HorarioInicio}-{c.HorarioFin}"
+            }).ToList();
+
+            return (true, "OK", cursosResult);
         }
 
         public async Task<(bool IsSuccess, string Message)> MatricularseAsync(int idEstudiante, int idCursoHabilitado)
