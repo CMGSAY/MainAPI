@@ -47,7 +47,7 @@ namespace MainAPI.Services
                                     HorarioInicio = ch.HorarioInicio,
                                     HorarioFin = ch.HorarioFin,
                                     Estado = ch.Estado,
-                                    EsHistorico = (ch.Estado != "activo" || ciclo.Estado != true)
+                                    EstadoCiclo = ciclo.Estado
                                 }).ToListAsync();
 
             var idsCursos = cursosDb.Select(c => c.IdCursoHabilitado).ToList();
@@ -73,7 +73,7 @@ namespace MainAPI.Services
                     c.Semestre,
                     Horario = $"{string.Join(", ", dias)} | {c.HorarioInicio?.ToString("HH:mm") ?? "N/A"} - {c.HorarioFin?.ToString("HH:mm") ?? "N/A"}",
                     c.Estado,
-                    c.EsHistorico
+                    EsHistorico = (c.Estado != "activo" || c.EstadoCiclo != true)
                 };
             }).ToList();
         }
