@@ -44,8 +44,6 @@ namespace MainAPI.Services
                                     Carrera = car.NombreCarrera,
                                     Facultad = fac.NombreFacultad,
                                     Semestre = sem.NombreSemestre,
-                                    HorarioInicio = ch.HorarioInicio,
-                                    HorarioFin = ch.HorarioFin,
                                     Estado = ch.Estado,
                                     EstadoCiclo = ciclo.Estado
                                 }).ToListAsync();
@@ -62,7 +60,16 @@ namespace MainAPI.Services
 
             return cursosDb.Select(c => 
             {
-                var dias = horariosDb.Where(h => h.IdCursoHabilitado == c.IdCursoHabilitado).Select(h => h.DiaSemana).ToList();
+                var horariosCurso = horariosDb.Where(h => h.IdCursoHabilitado == c.IdCursoHabilitado).ToList();
+                var dias = horariosCurso.Select(h => h.DiaSemana).ToList();
+                
+                string horarioFinal = "Sin horario";
+                if (horariosCurso.Any())
+                {
+                    var primerHorario = horariosCurso.First();
+                    horarioFinal = $"{string.Join(", ", dias)} | {primerHorario.HoraInicio.ToString("HH:mm")} - {primerHorario.HoraFin.ToString("HH:mm")}";
+                }
+
                 return new
                 {
                     c.IdCursoHabilitado,
@@ -71,7 +78,7 @@ namespace MainAPI.Services
                     c.Carrera,
                     c.Facultad,
                     c.Semestre,
-                    Horario = $"{string.Join(", ", dias)} | {c.HorarioInicio?.ToString("HH:mm") ?? "N/A"} - {c.HorarioFin?.ToString("HH:mm") ?? "N/A"}",
+                    Horario = horarioFinal,
                     c.Estado,
                     EsHistorico = (c.Estado != "activo" || c.EstadoCiclo != true)
                 };
