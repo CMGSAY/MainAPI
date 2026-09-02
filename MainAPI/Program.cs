@@ -72,7 +72,11 @@ builder.Services.AddScoped<MainAPI.Services.IOperativoService, MainAPI.Services.
 builder.Services.AddScoped<MainAPI.Services.IPersonasService, MainAPI.Services.PersonasService>();
 builder.Services.AddScoped<MainAPI.Services.ICatalogosService, MainAPI.Services.CatalogosService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 var app = builder.Build();
 
