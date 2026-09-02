@@ -51,9 +51,14 @@ namespace MainAPI.Services
                                 }).ToListAsync();
 
             var idsCursos = cursosDb.Select(c => c.IdCursoHabilitado).ToList();
-            var horariosDb = await _context.HorarioCursos
-                .Where(hc => idsCursos.Contains(hc.IdCursoHabilitado))
-                .ToListAsync();
+            var horariosDb = new List<HorarioCurso>();
+            
+            if (idsCursos.Any())
+            {
+                horariosDb = await _context.HorarioCursos
+                    .Where(hc => idsCursos.Contains(hc.IdCursoHabilitado))
+                    .ToListAsync();
+            }
 
             return cursosDb.Select(c => 
             {

@@ -33,7 +33,7 @@ namespace MainAPI.Services
                                 join c in _context.Cursos on csc.IdCurso equals c.IdCurso
                                 join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico into pcGroup
                                 from pc in pcGroup.DefaultIfEmpty()
-                                join per in _context.Personas on (pc != null ? pc.IdPersona : 0) equals per.IdPersona into perGroup
+                                join per in _context.Personas on pc.IdPersona equals per.IdPersona into perGroup
                                 from per in perGroup.DefaultIfEmpty()
                                 where a.IdEstudiante == idEstudiante && ch.Estado == "activo"
                                 select new
@@ -48,9 +48,14 @@ namespace MainAPI.Services
                                 }).ToListAsync();
 
             var idsCursos = cursos.Select(c => c.IdCursoHabilitado).ToList();
-            var horariosDb = await _context.HorarioCursos
-                .Where(hc => idsCursos.Contains(hc.IdCursoHabilitado))
-                .ToListAsync();
+            var horariosDb = new List<HorarioCurso>();
+            
+            if (idsCursos.Any())
+            {
+                horariosDb = await _context.HorarioCursos
+                    .Where(hc => idsCursos.Contains(hc.IdCursoHabilitado))
+                    .ToListAsync();
+            }
 
             return cursos.Select(c => 
             {
