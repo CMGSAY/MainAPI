@@ -17,5 +17,6 @@ namespace MainAPI.Services
         Task<object> GetParticipantesAsync(int idCursoHabilitado);
         Task<object> GetEntregasPorTareaAsync(int idTarea);
         Task<(bool IsSuccess, string Message)> GenerarParcialesOficialesAsync(int idCursoHabilitado);
+        Task<(bool IsSuccess, string Message)> GuardarAsistenciaCursoAsync(int idCursoHabilitado, AsistenciaGrupalDto dto);
     }
 }

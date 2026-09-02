@@ -78,6 +78,16 @@ namespace MainAPI.Controllers
             return Ok(result.Cursos);
         }
 
+        [HttpGet("{idEstudiante}/cursos-disponibles-matricula")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> GetCursosDisponiblesMatriculaAdmin(int idEstudiante)
+        {
+            var result = await _estudianteService.GetCursosDisponiblesMatriculaAsync(idEstudiante);
+            if (!result.IsSuccess) return BadRequest(result.Message);
+
+            return Ok(result.Cursos);
+        }
+
         [HttpPost("matricularse")]
         public async Task<IActionResult> Matricularse([FromBody] int idCursoHabilitado)
         {

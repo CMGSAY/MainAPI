@@ -112,5 +112,16 @@ namespace MainAPI.Controllers
 
             return Ok(new { mensaje = result.Message });
         }
+
+        [HttpPost("curso/{idCursoHabilitado}/asistencia")]
+        public async Task<IActionResult> PostAsistencia(int idCursoHabilitado, [FromBody] AsistenciaGrupalDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var result = await _docenteService.GuardarAsistenciaCursoAsync(idCursoHabilitado, dto);
+            if (!result.IsSuccess) return BadRequest(result.Message);
+
+            return Ok(new { mensaje = result.Message });
+        }
     }
 }

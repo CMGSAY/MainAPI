@@ -66,7 +66,7 @@ namespace MainAPI.Services
                     c.Carrera,
                     c.Facultad,
                     c.Semestre,
-                    Horario = $"{string.Join(", ", dias)} | {c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}",
+                    Horario = $"{string.Join(", ", dias)} | {c.HorarioInicio?.ToString("HH:mm") ?? "N/A"} - {c.HorarioFin?.ToString("HH:mm") ?? "N/A"}",
                     c.Estado,
                     c.EsHistorico
                 };
@@ -334,6 +334,47 @@ namespace MainAPI.Services
             _context.Tareas.AddRange(tareas);
             await _context.SaveChangesAsync();
             return (true, "Evaluaciones oficiales generadas correctamente.");
+        }
+        public async Task<(bool IsSuccess, string Message)> GuardarAsistenciaCursoAsync(int idCursoHabilitado, AsistenciaGrupalDto dto)
+        {
+            var curso = await _context.CursoHabilitados.FindAsync(idCursoHabilitado);
+            if (curso == null) return (false, "Curso no encontrado.");
+
+            // Buscar si ya existe la sesión en esa fecha
+            var sesion = await _context.ClaseSesions
+                .FirstOrDefaultAsync(s => s.IdCursoHabilitado == idCursoHabilitado && s.FechaSesion == DateOnly.FromDateTime(dto.FechaSesion));
+
+            if (sesion == null)
+            {
+                sesion = new ClaseSesion
+                {
+                    IdCursoHabilitado = idCursoHabilitado,
+                    FechaSesion = DateOnly.FromDateTime(dto.FechaSesion),
+                    TemaImpartido = "Sesión de clase"
+                };
+                _context.ClaseSesions.Add(sesion);
+                await _context.SaveChangesAsync();
+            }
+
+            // Eliminar asistencias previas de esta sesión si existieran
+            var asistenciasAnteriores = await _context.AsistenciaEstudiantes.Where(a => a.IdSesion == sesion.IdSesion).ToListAsync();
+            if (asistenciasAnteriores.Any())
+            {
+                _context.AsistenciaEstudiantes.RemoveRange(asistenciasAnteriores);
+            }
+
+            var nuevasAsistencias = dto.Estudiantes.Select(e => new AsistenciaEstudiante
+            {
+                IdSesion = sesion.IdSesion,
+                IdEstudiante = e.IdEstudiante,
+                EstadoAsistencia = e.IsPresente ? "Presente" : "Ausente",
+                FechaRegistro = DateTime.Now
+            }).ToList();
+
+            _context.AsistenciaEstudiantes.AddRange(nuevasAsistencias);
+            await _context.SaveChangesAsync();
+
+            return (true, "Asistencia guardada correctamente.");
         }
     }
 }

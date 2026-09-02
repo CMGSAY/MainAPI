@@ -31,8 +31,10 @@ namespace MainAPI.Services
                                 join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
                                 join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
                                 join c in _context.Cursos on csc.IdCurso equals c.IdCurso
-                                join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico
-                                join per in _context.Personas on pc.IdPersona equals per.IdPersona
+                                join pc in _context.PerfilCatedraticos on ch.IdCatedratico equals pc.IdCatedratico into pcGroup
+                                from pc in pcGroup.DefaultIfEmpty()
+                                join per in _context.Personas on (pc != null ? pc.IdPersona : 0) equals per.IdPersona into perGroup
+                                from per in perGroup.DefaultIfEmpty()
                                 where a.IdEstudiante == idEstudiante && ch.Estado == "activo"
                                 select new
                                 {
@@ -41,17 +43,30 @@ namespace MainAPI.Services
                                     Seccion = sec.NombreSeccion,
                                     HorarioInicio = ch.HorarioInicio,
                                     HorarioFin = ch.HorarioFin,
-                                    PrimerNombre = per.PrimerNombre,
-                                    PrimerApellido = per.PrimerApellido
+                                    PrimerNombre = per != null ? per.PrimerNombre : "Sin",
+                                    PrimerApellido = per != null ? per.PrimerApellido : "Asignar"
                                 }).ToListAsync();
 
-            return cursos.Select(c => new
+            var idsCursos = cursos.Select(c => c.IdCursoHabilitado).ToList();
+            var horariosDb = await _context.HorarioCursos
+                .Where(hc => idsCursos.Contains(hc.IdCursoHabilitado))
+                .ToListAsync();
+
+            return cursos.Select(c => 
             {
-                c.IdCursoHabilitado,
-                c.NombreCurso,
-                c.Seccion,
-                Horario = $"{c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}",
-                Docente = $"{c.PrimerNombre} {c.PrimerApellido}".Trim()
+                var dias = horariosDb.Where(h => h.IdCursoHabilitado == c.IdCursoHabilitado).Select(h => h.DiaSemana).ToList();
+                string diasStr = dias.Any() ? string.Join(", ", dias) : "Sin días";
+
+                return new
+                {
+                    c.IdCursoHabilitado,
+                    c.NombreCurso,
+                    c.Seccion,
+                    Horario = c.HorarioInicio.HasValue && c.HorarioFin.HasValue 
+                        ? $"{diasStr} | {c.HorarioInicio.Value.ToString("HH:mm")} - {c.HorarioFin.Value.ToString("HH:mm")}" 
+                        : "Sin horario",
+                    Docente = $"{c.PrimerNombre} {c.PrimerApellido}".Trim()
+                };
             }).ToList();
         }
 
