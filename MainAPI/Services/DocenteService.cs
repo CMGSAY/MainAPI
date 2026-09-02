@@ -26,7 +26,7 @@ namespace MainAPI.Services
 
         public async Task<object?> GetMisCursosAsync(int idCatedratico)
         {
-            var cursos = await (from ch in _context.CursoHabilitados
+            var cursosDb = await (from ch in _context.CursoHabilitados
                                 join sec in _context.Seccions on ch.IdSeccion equals sec.IdSeccion
                                 join csc in _context.CarreraSemestreCursos on ch.IdCarreraSemestreCurso equals csc.IdCarreraSemestreCurso
                                 join cs in _context.CarreraSemestres on csc.IdCarreraSemestre equals cs.IdCarreraSemestre
@@ -46,22 +46,30 @@ namespace MainAPI.Services
                                     Semestre = sem.NombreSemestre,
                                     HorarioInicio = ch.HorarioInicio,
                                     HorarioFin = ch.HorarioFin,
-                                    Dias = _context.HorarioCursos.Where(hc => hc.IdCursoHabilitado == ch.IdCursoHabilitado).Select(hc => hc.DiaSemana).ToList(),
                                     Estado = ch.Estado,
-                                    EsHistorico = (ch.Estado != "activo" || !ciclo.Estado.GetValueOrDefault())
+                                    EsHistorico = (ch.Estado != "activo" || ciclo.Estado != true)
                                 }).ToListAsync();
 
-            return cursos.Select(c => new
+            var idsCursos = cursosDb.Select(c => c.IdCursoHabilitado).ToList();
+            var horariosDb = await _context.HorarioCursos
+                .Where(hc => idsCursos.Contains(hc.IdCursoHabilitado))
+                .ToListAsync();
+
+            return cursosDb.Select(c => 
             {
-                c.IdCursoHabilitado,
-                c.NombreCurso,
-                c.Seccion,
-                c.Carrera,
-                c.Facultad,
-                c.Semestre,
-                Horario = $"{string.Join(", ", c.Dias)} | {c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}",
-                c.Estado,
-                c.EsHistorico
+                var dias = horariosDb.Where(h => h.IdCursoHabilitado == c.IdCursoHabilitado).Select(h => h.DiaSemana).ToList();
+                return new
+                {
+                    c.IdCursoHabilitado,
+                    c.NombreCurso,
+                    c.Seccion,
+                    c.Carrera,
+                    c.Facultad,
+                    c.Semestre,
+                    Horario = $"{string.Join(", ", dias)} | {c.HorarioInicio?.ToString(@"hh\:mm") ?? "N/A"} - {c.HorarioFin?.ToString(@"hh\:mm") ?? "N/A"}",
+                    c.Estado,
+                    c.EsHistorico
+                };
             }).ToList();
         }
 
