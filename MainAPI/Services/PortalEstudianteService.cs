@@ -206,5 +206,56 @@ namespace MainAPI.Services
 
             return (true, "Te has matriculado exitosamente.");
         }
+
+        public async Task<object?> GetAsistenciasAsync(int idEstudiante, int idCursoHabilitado)
+        {
+            var asistencias = await _context.AsistenciaEstudiantes
+                .Include(a => a.IdSesionNavigation)
+                .Where(a => a.IdEstudiante == idEstudiante && a.IdSesionNavigation.IdCursoHabilitado == idCursoHabilitado)
+                .Select(a => new
+                {
+                    Fecha = a.IdSesionNavigation.FechaSesion.ToDateTime(TimeOnly.MinValue),
+                    Estado = a.EstadoAsistencia
+                })
+                .OrderByDescending(a => a.Fecha)
+                .ToListAsync();
+
+            return asistencias;
+        }
+
+        public async Task<object?> GetCalificacionesAsync(int idEstudiante, int idCursoHabilitado)
+        {
+            var entregas = await _context.EntregaTareas
+                .Include(e => e.IdTareaNavigation)
+                .Where(e => e.IdEstudiante == idEstudiante && e.IdTareaNavigation.IdCursoHabilitado == idCursoHabilitado)
+                .Select(e => new
+                {
+                    TareaNombre = e.IdTareaNavigation.Titulo,
+                    FechaEntrega = e.FechaEnvio ?? DateTime.MinValue,
+                    PunteoObtenido = e.Calificacion ?? 0,
+                    PunteoMaximo = e.IdTareaNavigation.PunteoMaximo
+                })
+                .OrderByDescending(e => e.FechaEntrega)
+                .ToListAsync();
+
+            return entregas;
+        }
+
+        public async Task<object?> GetMiEntregaAsync(int idEstudiante, int idTarea)
+        {
+            var entrega = await _context.EntregaTareas
+                .Where(e => e.IdEstudiante == idEstudiante && e.IdTarea == idTarea)
+                .Select(e => new
+                {
+                    e.IdEntrega,
+                    e.UrlArchivoAdjunto,
+                    FechaEnvio = e.FechaEnvio ?? DateTime.MinValue,
+                    Calificacion = e.Calificacion,
+                    Comentarios = e.ComentariosCatedratico
+                })
+                .FirstOrDefaultAsync();
+
+            return entrega; // Puede ser null si no ha entregado
+        }
     }
 }

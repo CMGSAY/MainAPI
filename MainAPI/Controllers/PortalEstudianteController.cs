@@ -99,5 +99,34 @@ namespace MainAPI.Controllers
 
             return Ok(new { mensaje = result.Message });
         }
+
+        [HttpGet("curso/{idCursoHabilitado}/asistencias")]
+        public async Task<IActionResult> GetAsistencias(int idCursoHabilitado)
+        {
+            int idEstudiante = await GetEstudianteId();
+            if (idEstudiante == 0) return Unauthorized("Perfil de estudiante no encontrado.");
+
+            var asistencias = await _estudianteService.GetAsistenciasAsync(idEstudiante, idCursoHabilitado);
+            return Ok(asistencias);
+        }
+
+        [HttpGet("curso/{idCursoHabilitado}/calificaciones")]
+        public async Task<IActionResult> GetCalificaciones(int idCursoHabilitado)
+        {
+            int idEstudiante = await GetEstudianteId();
+            if (idEstudiante == 0) return Unauthorized("Perfil de estudiante no encontrado.");
+
+            var calificaciones = await _estudianteService.GetCalificacionesAsync(idEstudiante, idCursoHabilitado);
+            return Ok(calificaciones);
+        }
+        [HttpGet("tarea/{idTarea}/mi-entrega")]
+        public async Task<IActionResult> GetMiEntrega(int idTarea)
+        {
+            int idEstudiante = await GetEstudianteId();
+            if (idEstudiante == 0) return Unauthorized("Perfil de estudiante no encontrado.");
+
+            var entrega = await _estudianteService.GetMiEntregaAsync(idEstudiante, idTarea);
+            return Ok(entrega); // Puede regresar un 204 o nulo si no hay, la app lo leerá
+        }
     }
 }

@@ -12,5 +12,8 @@ namespace MainAPI.Services
         Task<object?> GetKardexAsync(int idEstudiante);
         Task<(bool IsSuccess, string Message, object? Cursos)> GetCursosDisponiblesMatriculaAsync(int idEstudiante);
         Task<(bool IsSuccess, string Message)> MatricularseAsync(int idEstudiante, int idCursoHabilitado);
+        Task<object?> GetAsistenciasAsync(int idEstudiante, int idCursoHabilitado);
+        Task<object?> GetCalificacionesAsync(int idEstudiante, int idCursoHabilitado);
+        Task<object?> GetMiEntregaAsync(int idEstudiante, int idTarea);
     }
 }
